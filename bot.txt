@@ -1,0 +1,24 @@
+bot
+  .version('0.0.1')
+  .startCommand('!') //Optional
+  .parseCommands(path);
+
+
+bot.parse(line, data);
+bot.outputHelp(cb);
+
+
+
+
+
+install : function(bot) {
+	bot		
+		.command('install [name]', 'install one or more packages')	
+		.option('-s --size <size>', 'Pizza size', /^(large|medium|small)$/i, 'medium')
+  		.option('-d --drink [drink]', 'Drink', /^(coke|pepsi|izze)$/i)
+  		.parseCommands(path)
+  		.description('run setup commands for all envs')
+  		.action(options, data) {
+	
+		}
+}

@@ -1,0 +1,28 @@
+{
+  "name": "bot-commander",
+  "version": "0.0.1",
+  "description": "Open minded library for command parsing, designed for interactive input",
+  "main": "index.js",
+  "keywords": [
+    "command",
+    "option",
+    "parser",
+    "bot"
+  ],
+  "author": {
+    "name": "Ramiro Aparicio",
+    "email": "rapariciog@gmail.com"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "license": "MIT",
+  "dependencies": {},
+  "engines": {
+    "node": ">= 4.4.x"
+  },
+  "devDependencies": {
+    "mocha": "^2.4.5",
+    "should": "^8.3.1"
+  }
+}
