@@ -1,7 +1,7 @@
 {
   "name": "bot-commander",
   "version": "0.0.1",
-  "description": "Open minded library for command parsing, designed for interactive input",
+  "description": "library for command parsing, designed for interactive input (chat)",
   "main": "index.js",
   "keywords": [
     "command",
@@ -14,7 +14,7 @@
     "email": "rapariciog@gmail.com"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node_modules/.bin/mocha -w"
   },
   "license": "MIT",
   "dependencies": {},
@@ -24,5 +24,9 @@
   "devDependencies": {
     "mocha": "^2.4.5",
     "should": "^8.3.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/frisco82/botCommander.git"
   }
 }
