@@ -48,22 +48,26 @@ Option.prototype.name = function() {
 
 function BotCommand(name) {
 	this.prefixes = null;
-	this.sendMessage = null;
+	this.parseOpts = {
+		send: null,
+		allowUnknownOption: false,
+		showHelpOnError: true
+	};
 	this.commands = [];
 	this.options = [];
 	this._execs = {};
-	this._allowUnknownOption = false;
 	this._args = [];
 	this._name = name || '';
 	this._alias = null;
+	this._msgBuffer = '';
 }
 
 util.inherits(BotCommand, EventEmitter);
 
-
-BotCommand.prototype.setSend = function(cb) {
-	this.sendMessage = cb;
+BotCommand.prototype.setParseOptions = function(options) {
+	this.parseOpts = options;
 }
+
 
 BotCommand.prototype.prefix = function(prefix) {
 	if (typeof prefix === 'string') {
@@ -144,8 +148,7 @@ BotCommand.prototype.command = function(name, opts) {
 		this.addImplicitHelpCommand();
 	}
 	var cmd = new BotCommand(args.shift());
-	cmd.setSend(this.sendMessage);
-
+	cmd.setParseOptions(this.parseOpts);
 	cmd._noHelp = !!opts.noHelp;
 	this.commands.push(cmd);
 	cmd.parseExpectedArgs(args);
@@ -189,7 +192,7 @@ BotCommand.prototype.addImplicitHelpCommand = function() {
 BotCommand.prototype.parseExpectedArgs = function(args) {
 	if (!args.length) return;
 	var self = this;
-	args.forEach(function(arg) {
+	args.forEach(function(arg, index) {
 		var argDetails = {
 			required: false,
 			name: '',
@@ -209,6 +212,9 @@ BotCommand.prototype.parseExpectedArgs = function(args) {
 		if (argDetails.name.length > 3 && argDetails.name.slice(-3) === '...') {
 			argDetails.variadic = true;
 			argDetails.name = argDetails.name.slice(0, -3);
+			if (index != args.length -1) {
+				throw new Error(`error: variadic arguments must be last ${argDetails.name}`);				
+			}
 		}
 		if (argDetails.name) {
 			self._args.push(argDetails);
@@ -241,8 +247,9 @@ BotCommand.prototype.action = function(fn) {
 		unknown = unknown || [];
 
 		const parsed = self.parseOptions(unknown);
-		if (parsed.error) {
-			self.outputHelp(metadata);
+		if (parsed.error.length > 0) {
+			self._checkShowHelp(parsed.error);
+			self.send(metadata, parsed.error.join('\n'));
 			return;
 		}
 		// Output help if necessary
@@ -253,34 +260,31 @@ BotCommand.prototype.action = function(fn) {
 		// If there are still any unknown options, then we simply
 		// die, unless someone asked for help, in which case we give it
 		// to them, and then we die.
-		if (parsed.unknown.length > 0) {
-			self.unknownOption(parsed.unknown[0], metadata);
-			self.outputHelp(metadata);
+		if (parsed.unknown.length > 0 && !self.parseOpts.allowUnknownOption) {
+			let msg = [];
+			msg.push(self.unknownOption(parsed.unknown[0]));
+			self._checkShowHelp(msg);
+			self.send(metadata, msg.join('\n'));
+			return;
 		}
 
 		// Leftover arguments need to be pushed back. Fixes issue #56
 		if (parsed.args.length) args = parsed.args.concat(args);
 
-		let errorCount = 0;
+		let error = [];
 		self._args.forEach(function(arg, i) {
 			if (arg.required && null == args[i]) {
-				self.missingArgument(arg.name, metadata);
-				errorCount++;
+				error.push(self.missingArgument(arg.name));
 			} else if (arg.variadic) {
-				if (i !== self._args.length - 1) {
-					self.variadicArgNotLast(arg.name);
-					errorCount++;
-				}
-
 				args[i] = args.splice(i);
 			}
 		});
-		if (errorCount > 0) {
-			this.outputHelp(metadata);
+		if (error.length > 0) {
+			self._checkShowHelp(error);
+			self.send(metadata, error.join('\n'));
 			return;
 		}
-
-		for (let i = args; i < self._args; i++) {
+		for (let i = args.length; i < self._args.length; i++) {
 			args.push(null);
 		}
 		args.push(self.opts());
@@ -406,7 +410,29 @@ BotCommand.prototype.option = function(flags, description, fn, defaultValue) {
  * @api public
  */
 BotCommand.prototype.allowUnknownOption = function(arg) {
-	this._allowUnknownOption = arguments.length === 0 || arg;
+	this.parseOpts.allowUnknownOption = arguments.length === 0 || arg;
+	return this;
+};
+
+/**
+ * Configure output function for errors
+ * 
+ * @param {Function} cb the callback function to be called for output
+ * @api public
+ */
+BotCommand.prototype.setSend = function(cb) {
+	this.parseOpts.send = cb;
+	return this;
+}
+
+/**
+ * Show full command help when an error occurs
+ *
+ * @param {Boolean} arg if `true` or omitted it will show the full help when an error occurs 
+ * @api public
+ */
+BotCommand.prototype.showHelpOnError = function(arg) {
+	this.parseOpts.showHelpOnError = arguments.length === 0 || arg;
 	return this;
 };
 
@@ -432,9 +458,10 @@ BotCommand.prototype.parse = function(line, metadata) {
 	this.rawArgs = argv;
 
 	// process argv
-	const parsed = this.parseOptions(this.normalize(argv), metadata);
-	if (parsed.error) {
-		this.outputHelp(metadata);
+	const parsed = this.parseOptions(this.normalize(argv));
+	if (parsed.error.length > 0) {
+		this._checkShowHelp(parsed.error);
+		this.send(metadata, parsed.error.join('\n'));
 		return;
 	}
 	this.args = parsed.args;
@@ -545,10 +572,10 @@ BotCommand.prototype.optionFor = function(arg) {
  * @api public
  */
 
-BotCommand.prototype.parseOptions = function(argv, metadata) {
+BotCommand.prototype.parseOptions = function(argv) {
 	let args = [],
 		len = argv.length,
-		literal, option, arg, errorCount = 0;
+		literal, option, arg, error = [];
 
 	let unknownOptions = [];
 
@@ -575,8 +602,7 @@ BotCommand.prototype.parseOptions = function(argv, metadata) {
 			if (option.required) {
 				arg = argv[++i];
 				if (null == arg) {
-					this.optionMissingArgument(option, metadata);
-					errorCount++;
+					error.push(this.optionMissingArgument());
 				}
 				this.emit(option.name(), arg);
 				// optional arg
@@ -612,7 +638,7 @@ BotCommand.prototype.parseOptions = function(argv, metadata) {
 		args.push(arg);
 	}
 	return {
-		error: errorCount > 0,
+		error: error,
 		args: args,
 		unknown: unknownOptions
 	};
@@ -640,21 +666,21 @@ BotCommand.prototype.opts = function() {
  * @api private
  */
 
-BotCommand.prototype.missingArgument = function(name, metadata) {
-	this.sendMessage(metadata, `  error: missing required argument ${name}`);
+BotCommand.prototype.missingArgument = function(name) {
+	return `  error: missing required argument ${name}`;
 };
+
 
 /**
  * `Option` is missing an argument, but received `flag` or nothing.
  *
  * @param {String} option
- * @param {String} flag
  * @api private
  */
 
-BotCommand.prototype.optionMissingArgument = function(option, metadata) {
-	this.sendMessage(metadata, `  error: option ${option.flags} argument missing`);
-};
+BotCommand.prototype.optionMissingArgument = function(option) {
+	return `  error: option ${option.flags} argument missing`;
+}
 
 /**
  * Unknown option `flag`.
@@ -663,20 +689,8 @@ BotCommand.prototype.optionMissingArgument = function(option, metadata) {
  * @api private
  */
 
-BotCommand.prototype.unknownOption = function(flag, metadata) {
-	if (this._allowUnknownOption) return;
-	this.sendMessage(metadata, `  error: unknown option ${flag}`);
-};
-
-/**
- * Variadic argument with `name` is not the last argument as required.
- *
- * @param {String} name
- * @api private
- */
-
-BotCommand.prototype.variadicArgNotLast = function(name, metadata) {
-	this.sendMessage(metadata, `  error: variadic arguments must be last ${name}`);
+BotCommand.prototype.unknownOption = function(flag) {
+	return `  error: unknown option ${flag}`;
 };
 
 /**
@@ -809,10 +823,10 @@ BotCommand.prototype.commandHelp = function() {
  * Return program help documentation.
  *
  * @return {String}
- * @api private
+ * @api public
  */
 
-BotCommand.prototype.helpInformation = function() {
+BotCommand.prototype.help = function() {
 	var desc = [];
 	if (this._description) {
 		desc = [
@@ -850,18 +864,19 @@ BotCommand.prototype.helpInformation = function() {
  */
 
 BotCommand.prototype.outputHelp = function(metadata) {
-	this.sendMessage(metadata, this.helpInformation());
-	this.emit('--help');
+	this.send(metadata, this.help());
 };
 
-/**
- * Output help information and exit.
- *
- * @api public
- */
+BotCommand.prototype.send = function(metadata, msg) {
+	if (msg && msg.length > 0) {
+		this.parseOpts.send(metadata, msg);
+	}
+};
 
-BotCommand.prototype.help = function(cb) {
-	return this.helpInformation();
+BotCommand.prototype._checkShowHelp = function(arr) {
+	if (this.parseOpts.showHelpOnError) {
+		arr.push(this.help());
+	}
 };
 
 /**
@@ -922,6 +937,7 @@ function humanReadableArgName(arg) {
 
 	return arg.required ? '<' + nameOutput + '>' : '[' + nameOutput + ']'
 }
+
 
 /**
  * Expose the root command.

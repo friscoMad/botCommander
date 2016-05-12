@@ -1,5 +1,5 @@
 "use strict";
-const bot = require('./index.js');
+const bot = require('../index.js');
 
 bot
 	.prefix("!")
