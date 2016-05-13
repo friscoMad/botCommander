@@ -495,9 +495,17 @@ BotCommand.prototype.normalize = function(args) {
 		} else if (lastOpt && lastOpt.required) {
 			ret.push(arg);
 		} else if (arg.length > 1 && '-' == arg[0] && '-' != arg[1]) {
+			let value = null;
+			if (~(index = arg.indexOf('='))) {
+				value = arg.slice(index + 1);
+				arg = arg.slice(0, index);
+			}
 			arg.slice(1).split('').forEach(function(c) {
 				ret.push('-' + c);
 			});
+			if (value) {
+				ret.push(value);
+			}
 		} else if (/^--/.test(arg) && ~(index = arg.indexOf('='))) {
 			ret.push(arg.slice(0, index), arg.slice(index + 1));
 		} else {
@@ -602,7 +610,7 @@ BotCommand.prototype.parseOptions = function(argv) {
 			if (option.required) {
 				arg = argv[++i];
 				if (null == arg) {
-					error.push(this.optionMissingArgument());
+					error.push(this.optionMissingArgument(option));
 				}
 				this.emit(option.name(), arg);
 				// optional arg
