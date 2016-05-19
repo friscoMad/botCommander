@@ -201,6 +201,16 @@ describe('parsing', function() {
 			});
 			bot.parse('test');
 		});
+		it("should honor showHelpOnEmpty", function(done) {
+			const bot = new BotCommand();
+			bot.showHelpOnEmpty(true)
+				.command('test')
+				.setSend((meta, msg) => {
+					msg.should.be.eql(bot.help());
+					done();
+				});
+			bot.parse('');
+		});
 		it("should be able to reassign send functions", function(done) {
 			const bot = new BotCommand();
 			let cmd = bot.command('test <required>')
@@ -742,6 +752,43 @@ describe('parsing', function() {
 		});
 	});
 	describe('#subcommands', function() {
-		it("should work");
+		let subcommandBot = function(bot) {
+			return bot
+				.command('test')
+				.description('sub command test');
+		};
+		it("main help should only show top commands", function() {
+			const bot = basicBot();
+			const testCmd = subcommandBot(bot);
+			testCmd
+				.command('subcmd');
+			bot.help().should.not.be.eql(testCmd.help());
+			(bot.help().indexOf('subcmd')).should.be.eql(-1);
+		});
+		it("should show help if no subcommand is passed", function() {
+			const bot = basicBot();
+			const testCmd = subcommandBot(bot);
+			testCmd
+				.command('subcmd')
+				.setSend(send);
+			bot.parse('test');
+			output.should.be.eql(testCmd.help() + "\n");
+		});
+		it("should show help if no subcommand is passed unless disabled", function() {
+			const bot = basicBot();
+			const testCmd = subcommandBot(bot);
+			testCmd
+				.showHelpOnEmpty(false)
+				.command('subcmd');
+			bot.parse('test');
+		});
+		it("should call subcommands", function(done) {
+			const bot = basicBot();
+			const testCmd = subcommandBot(bot);
+			testCmd
+				.command('subcmd')
+				.action(done)
+			bot.parse('test subcmd');
+		});
 	});
 });

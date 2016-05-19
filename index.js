@@ -53,6 +53,7 @@ function BotCommand(name) {
 		allowUnknownOption: false,
 		showHelpOnError: true
 	};
+	this._showHelpOnEmpty = false;
 	this.commands = [];
 	this.options = [];
 	this._execs = {};
@@ -149,6 +150,7 @@ BotCommand.prototype.command = function(name, opts) {
 	}
 	var cmd = new BotCommand(args.shift());
 	cmd.setParseOptions(this.parseOpts);
+	cmd.showHelpOnEmpty();
 	cmd._noHelp = !!opts.noHelp;
 	this.commands.push(cmd);
 	cmd.parseExpectedArgs(args);
@@ -437,6 +439,17 @@ BotCommand.prototype.showHelpOnError = function(arg) {
 };
 
 /**
+ * Show full command help when no command is found
+ *
+ * @param {Boolean} arg if `true` or omitted it will show the full help when no command is found
+ * @api public
+ */
+BotCommand.prototype.showHelpOnEmpty = function(arg) {
+	this._showHelpOnEmpty = arguments.length === 0 || arg;
+	return this;
+};
+
+/**
  * Parse `argv`, settings options and invoking commands when defined.
  *
  * @param {Array} argv
@@ -530,8 +543,7 @@ BotCommand.prototype.normalize = function(args) {
 
 BotCommand.prototype.parseArgs = function(args, unknown, metadata) {
 	var name;
-
-	if (args.length) {
+	if (args.length && args[0] != '') {
 		name = args[0];
 		if ('help' == name && 1 == args.length) {
 			this.outputHelp(metadata);
@@ -555,7 +567,9 @@ BotCommand.prototype.parseArgs = function(args, unknown, metadata) {
 			}
 		}
 	} else {
-		outputHelpIfNecessary(this, unknown, metadata);
+		if (!outputHelpIfNecessary(this, unknown, metadata) && this._showHelpOnEmpty) {
+			this.outputHelp(metadata);
+		}
 	}
 };
 
