@@ -148,12 +148,12 @@ BotCommand.prototype.command = function(name, opts) {
 		// implicit command help
 		this.addImplicitHelpCommand();
 	}
-	var cmd = new BotCommand(args.shift());
+	var cmd = new BotCommand(args[0]);
 	cmd.setParseOptions(this.parseOpts);
 	cmd.showHelpOnEmpty();
 	cmd._noHelp = !!opts.noHelp;
 	this.commands.push(cmd);
-	cmd.parseExpectedArgs(args);
+	cmd.parseExpectedArgs(name.substring(args[0].length).trim());
 	cmd.parent = this;
 
 	return cmd;
@@ -166,7 +166,7 @@ BotCommand.prototype.command = function(name, opts) {
  */
 
 BotCommand.prototype.arguments = function(desc) {
-	return this.parseExpectedArgs(desc.split(/ +/));
+	return this.parseExpectedArgs(desc);
 };
 
 /**
@@ -191,8 +191,10 @@ BotCommand.prototype.addImplicitHelpCommand = function() {
  * @api public
  */
 
-BotCommand.prototype.parseExpectedArgs = function(args) {
-	if (!args.length) return;
+BotCommand.prototype.parseExpectedArgs = function(argString) {
+	let args = argString.match(/(<.+?>)|(\[.+?\])/g);
+
+	if (!args || !args.length) return;
 	var self = this;
 	args.forEach(function(arg, index) {
 		var argDetails = {
@@ -209,6 +211,10 @@ BotCommand.prototype.parseExpectedArgs = function(args) {
 			case '[':
 				argDetails.name = arg.slice(1, -1);
 				break;
+		}
+		var newName = arg.match(/(\".+?\")|(\'.+?\')/g);
+		if (newName) {
+			argDetails.name = newName;
 		}
 
 		if (argDetails.name.length > 3 && argDetails.name.slice(-3) === '...') {
@@ -275,6 +281,9 @@ BotCommand.prototype.action = function(fn) {
 
 		let error = [];
 		self._args.forEach(function(arg, i) {
+			if (args[i] && args[i].match(/["'].+["']/)) {
+				args[i] = args[i].substring(1, args[i].length - 1);
+			}
 			if (arg.required && null == args[i]) {
 				error.push(self.missingArgument(arg.name));
 			} else if (arg.variadic) {
@@ -466,7 +475,7 @@ BotCommand.prototype.parse = function(line, metadata) {
 		line = line.substring(prefixFound.length);
 	}
 
-	const argv = line.split(/\s+/);
+	const argv = line.split(/(\".+?\")|(\'.+?\')|\s+/g).filter(a => (a && a.length > 0));;
 	// store raw args
 	this.rawArgs = argv;
 
