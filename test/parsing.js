@@ -69,9 +69,7 @@ describe('parsing', function() {
 			const bot = new BotCommand();
 			let cmd = bot.command('test <required>')
 				.action(countCalls);
-			bot.setSend(a => {
-				throw new Error("This shouldn't be called");
-			});
+			bot.setSend(sendError);
 			cmd.setSend(done);
 			bot.parse('test');
 		});
@@ -79,9 +77,7 @@ describe('parsing', function() {
 			const bot = new BotCommand();
 			let cmd = bot.command('test <required>')
 				.action(countCalls)
-				.setSend(a => {
-					throw new Error("This shouldn't be called");
-				});
+				.setSend(sendError);
 			bot.setSend(done);
 			bot.parse('test');
 		});

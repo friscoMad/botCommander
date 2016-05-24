@@ -6,6 +6,8 @@
 
 const EventEmitter = require('events').EventEmitter;
 const util = require('util');
+const Fs = require('fs');
+const Path = require('path');
 
 /**
  * Initialize a new `Option` with the given `flags` and `description`.
@@ -65,11 +67,23 @@ function BotCommand(name) {
 
 util.inherits(BotCommand, EventEmitter);
 
+/**
+ * Overwrite all parse options for a command and the subcommands created afterwards
+ * @param {Object} options A new set of parse options (send function, allowUnknownOption and showHelpOnError)
+ * @api public
+ */
 BotCommand.prototype.setParseOptions = function(options) {
 	this.parseOpts = options;
 }
 
-
+/**
+ * Sets the prefix to search when parsing a line of text, this option is not inherited by subcommands otherwise it would
+ * require double prefix for subcomands something like !command !subcommad
+ * 
+ * @param  {String or array} prefix A single string or an Array of strings to be used as prefixes	
+ * @return {BotCommand}        This object for chaining
+ * @api public
+ */
 BotCommand.prototype.prefix = function(prefix) {
 	if (typeof prefix === 'string') {
 		this.prefixes = [prefix];
@@ -82,19 +96,14 @@ BotCommand.prototype.prefix = function(prefix) {
 /**
  * Add command `name`.
  *
- * The `.action()` callback is invoked when the
- * command `name` is specified via __ARGV__,
- * and the remaining arguments are applied to the
- * function for access.
- *
- * When the `name` is "*" an un-matched command
- * will be passed as the first arg, followed by
- * the rest of __ARGV__ remaining.
+ * The `.action()` callback is invoked when the command `name` is specified in the line parsed,
+ * and the remaining arguments are applied to the function for access if they are not passed 
+ * null arguments will be aplied.
+ * A first argument with the metadata received on parsing will be apllied to every action.
  *
  * Examples:
  *
  *      program
- *        .version('0.0.1')
  *        .option('-C, --chdir <path>', 'change the working directory')
  *        .option('-c, --config <path>', 'set config path. defaults to ./deploy.conf')
  *        .option('-T, --no-tests', 'ignore test hook')
@@ -109,14 +118,14 @@ BotCommand.prototype.prefix = function(prefix) {
  *      program
  *        .command('exec <cmd>')
  *        .description('run the given remote command')
- *        .action(function(cmd) {
+ *        .action(function(meta, cmd) {
  *          console.log('exec "%s"', cmd);
  *        });
  *
  *      program
  *        .command('teardown <dir> [otherDirs...]')
  *        .description('run teardown commands')
- *        .action(function(dir, otherDirs) {
+ *        .action(function(meta, dir, otherDirs) {
  *          console.log('dir "%s"', dir);
  *          if (otherDirs) {
  *            otherDirs.forEach(function (oDir) {
@@ -125,17 +134,11 @@ BotCommand.prototype.prefix = function(prefix) {
  *          }
  *        });
  *
- *      program
- *        .command('*')
- *        .description('deploy the given env')
- *        .action(function(env) {
- *          console.log('deploying "%s"', env);
- *        });
  *
- *      program.parse(process.argv);
+ *      program.parse(line, metadata);
  *
  * @param {String} name
- * @param {String} [desc] for git-style sub-commands
+ * @param {Object} option object, currently only used to disable help on this command
  * @return {Command} the new command
  * @api public
  */
@@ -220,8 +223,8 @@ BotCommand.prototype.parseExpectedArgs = function(argString) {
 		if (argDetails.name.length > 3 && argDetails.name.slice(-3) === '...') {
 			argDetails.variadic = true;
 			argDetails.name = argDetails.name.slice(0, -3);
-			if (index != args.length -1) {
-				throw new Error(`error: variadic arguments must be last ${argDetails.name}`);				
+			if (index != args.length - 1) {
+				throw new Error(`error: variadic arguments must be last ${argDetails.name}`);
 			}
 		}
 		if (argDetails.name) {
@@ -459,9 +462,11 @@ BotCommand.prototype.showHelpOnEmpty = function(arg) {
 };
 
 /**
- * Parse `argv`, settings options and invoking commands when defined.
+ * Parse line of text, settings options and invoking commands actions when defined.
+ * If there is no command defined in the line or there is some error the help will be sent.
  *
- * @param {Array} argv
+ * @param {String} line of text
+ * @param {Object} metadata to be passed to send function and actions
  * @return {Command} for chaining
  * @api public
  */
@@ -541,11 +546,13 @@ BotCommand.prototype.normalize = function(args) {
 /**
  * Parse command `args`.
  *
- * When listener(s) are available those
- * callbacks are invoked, otherwise the "*"
+ * If help it is requested or there is no argument to parse sends help, otherwise tries to invoke listener(s) when available, then it
+ * checks if a subcommand is the first arg and delegates the parsing to that subcomand, otherwise the "*"
  * event is emitted and those actions are invoked.
  *
  * @param {Array} args
+ * @param {Array} unknown options and arguments unknown for this command probably defined on subcommands
+ * @param {Object} metadata to be passed to send function and actions
  * @return {Command} for chaining
  * @api private
  */
@@ -851,7 +858,7 @@ BotCommand.prototype.commandHelp = function() {
 };
 
 /**
- * Return program help documentation.
+ * Return command help documentation.
  *
  * @return {String}
  * @api public
@@ -898,17 +905,78 @@ BotCommand.prototype.outputHelp = function(metadata) {
 	this.send(metadata, this.help());
 };
 
+/**
+ * Sends a message using the configured send function
+ *
+ * @param  {Object} metadata Maybe needed by the send function
+ * @param  {String} msg      Message to be sent
+ * @api public 
+ */
 BotCommand.prototype.send = function(metadata, msg) {
 	if (msg && msg.length > 0) {
 		this.parseOpts.send(metadata, msg);
 	}
 };
 
+/**
+ * Checks if showHelpOnError is true and in that case adds the help to the error string
+ * 
+ * @param  {Array} arr Array with all the errors detected 
+ * @api private
+ */
 BotCommand.prototype._checkShowHelp = function(arr) {
 	if (this.parseOpts.showHelpOnError) {
 		arr.push(this.help());
 	}
 };
+
+/**
+ * Tries to load a file passing this to be able to add subcommands
+ *
+ * Example of a included file:
+ *
+ * exports bot => {
+ *   bot.command('test')
+ *      .description('test command')
+ *      .action( a => console.log('test'));
+ * }
+ * 
+ * @param  {String} path Parent folder of the file
+ * @param  {String} file Name of the file to load
+ * @api public
+ */
+BotCommand.prototype.loadFile = function(path, file) {
+	let absPath = Path.resolve(path);
+	const ext = Path.extname(file);
+	const full = Path.join(absPath, Path.basename(file, ext));
+	if (require.extensions[ext]) {
+		try {
+			let script = require(full);
+			if (typeof script == 'function') {
+				script(this);
+			}
+		} catch (error) {
+			throw new Error(`Unable to load ${full}: ${error.stack}`);
+		}
+	}
+	return this;
+}
+
+/**
+ * Load all files in a path to be able to include subcommands
+ * 
+ * @param  {String} path Where to search for include files
+ * @return {BotCommand}      This to allow chaining
+ * @api public
+ */
+BotCommand.prototype.load = function(path) {
+	let absPath = Path.resolve(path);
+	Fs.accessSync(absPath);
+	Fs.readdirSync(absPath).sort().forEach(file => {
+		this.loadFile(absPath, file);
+	});
+	return this;
+}
 
 /**
  * Camel-case the given `flag`
@@ -968,7 +1036,6 @@ function humanReadableArgName(arg) {
 
 	return arg.required ? '<' + nameOutput + '>' : '[' + nameOutput + ']'
 }
-
 
 /**
  * Expose the root command.
