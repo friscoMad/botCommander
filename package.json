@@ -28,5 +28,8 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/frisco82/botCommander.git"
+  },
+  "jshintConfig": {
+    "esversion": 6
   }
 }

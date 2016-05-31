@@ -2,7 +2,6 @@
 const bot = require('../index.js');
 
 bot
-	.prefix("!")
 	.setSend(function(metadata, text) {
 		console.log(text);
 	});
@@ -33,12 +32,12 @@ bot
 	.command('nohelp', {noHelp: true})
 	.description('hidden command')
 	.action(function(metadata, opts) {
-		console.log('It works!!')
+		console.log('It works!!');
 	});
 
 const command = bot
 	.command('sub <command>')
-	.description('Subcomandos');
+	.description('Subcomand');
 
 command
 	.command('echo <echo>')

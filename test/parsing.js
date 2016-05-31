@@ -24,7 +24,7 @@ describe('parsing', function() {
 		const bot = new BotCommand();
 		return bot.setSend(sendError)
 			.allowUnknownOption(false);
-	}
+	};
 	beforeEach(function() {
 		calledCount = 0;
 		output = "";
@@ -83,7 +83,6 @@ describe('parsing', function() {
 		});
 		it("should pass metadata", function(done) {
 			const bot = new BotCommand();
-			let meta
 			let cmd = bot.command('test <required>')
 				.action(countCalls)
 				.setSend(a => {
@@ -244,7 +243,7 @@ describe('parsing', function() {
 			bot
 				.command('test [args...]')
 				.action((meta, args2) => {
-					(args2.length).should.be.empty;
+					(args2.length).should.be.empty();
 					done();
 				});
 			bot.parse('test');
@@ -286,7 +285,7 @@ describe('parsing', function() {
 					.option('-e --exists', 'exists')
 					.option('-a', 'apples')
 					.option('-A --no-apples', "don't like apples");
-			}
+			};
 			it("should print help on unknow options", function() {
 				const bot = new BotCommand();
 				bot.setSend(send);
@@ -313,8 +312,8 @@ describe('parsing', function() {
 					.option('-o', 'option')
 					.option('-e', 'option2')
 					.action((meta, opts) => {
-						(opts.O).should.be.true;
-						(opts.E).should.be.true;
+						opts.should.con;
+						(opts.E).should.be.true();
 						done();
 					});
 				bot.parse('test -o -e');
@@ -323,8 +322,8 @@ describe('parsing', function() {
 				const bot = basicBot();
 				optionsBot(bot)
 					.action((meta, opts) => {
-						(opts.opt).should.be.true;
-						(opts.exists).should.be.true;
+						(opts.opt).should.be.true();
+						(opts.exists).should.be.true();
 						done();
 					});
 				bot.parse('test -o -e');
@@ -333,8 +332,8 @@ describe('parsing', function() {
 				const bot = basicBot();
 				optionsBot(bot)
 					.action((meta, opts) => {
-						(opts.opt).should.be.true;
-						(opts.exists).should.be.true;
+						(opts.opt).should.be.true();
+						(opts.exists).should.be.true();
 						done();
 					});
 				bot.parse('test --opt --exists');
@@ -343,8 +342,8 @@ describe('parsing', function() {
 				const bot = basicBot();
 				optionsBot(bot)
 					.action((meta, opts) => {
-						(opts.opt).should.be.true;
-						(opts.exists).should.be.true;
+						(opts.opt).should.be.true();
+						(opts.exists).should.be.true();
 						done();
 					});
 				bot.parse('test -oe');
@@ -353,9 +352,9 @@ describe('parsing', function() {
 				const bot = basicBot();
 				optionsBot(bot)
 					.action((meta, opts) => {
-						(opts.opt).should.be.true;
-						(opts.exists).should.be.true;
-						(opts.apples).should.be.true;
+						(opts.opt).should.be.true();
+						(opts.exists).should.be.true();
+						(opts.apples).should.be.true();
 						done();
 					});
 				bot.parse('test -oe -a');
@@ -364,9 +363,9 @@ describe('parsing', function() {
 				const bot = basicBot();
 				optionsBot(bot)
 					.action((meta, opts) => {
-						(opts.opt).should.be.true;
-						(opts.exists).should.be.true;
-						(opts.apples).should.be.true;
+						(opts.opt).should.be.true();
+						(opts.exists).should.be.true();
+						(opts.apples).should.be.true();
 						done();
 					});
 				bot.parse('test -oe --verbose');
@@ -375,7 +374,7 @@ describe('parsing', function() {
 				const bot = basicBot();
 				optionsBot(bot)
 					.action((meta, opts) => {
-						(opts.apples).should.be.false;
+						(opts.apples).should.be.false();
 						done();
 					});
 				bot.parse('test -A');
@@ -518,10 +517,10 @@ describe('parsing', function() {
 			let collect = (val, memo) => {
 				memo.push(val);
 				return memo;
-			}
+			};
 			let increaseVerbosity = (v, total) => {
 				return total + 1;
-			}
+			};
 			let optionsBot = function(bot) {
 				return bot
 					.command('test')
@@ -539,7 +538,7 @@ describe('parsing', function() {
 						opts.integer.should.be.Number();
 						opts.integer.should.be.eql(1);
 						done();
-					})
+					});
 				bot.parse('test -i 1');
 			});
 			it("should return float", function(done) {
@@ -549,7 +548,7 @@ describe('parsing', function() {
 						opts.float.should.be.Number();
 						opts.float.should.be.eql(4.5);
 						done();
-					})
+					});
 				bot.parse('test -f 4.5');
 			});
 			it("should return range", function(done) {
@@ -559,7 +558,7 @@ describe('parsing', function() {
 						opts.range.should.be.Array();
 						opts.range.should.be.eql([1, 3]);
 						done();
-					})
+					});
 				bot.parse('test -r 1..3');
 			});
 			it("should return list", function(done) {
@@ -570,9 +569,9 @@ describe('parsing', function() {
 						opts.list.should.be.Array();
 						opts.list.forEach((value, index) => {
 							value.should.be.eql(list[index]);
-						})
+						});
 						done();
-					})
+					});
 				bot.parse('test -l ' + list.join(','));
 			});
 			it("should return list of repetitions", function(done) {
@@ -583,9 +582,9 @@ describe('parsing', function() {
 						opts.collect.should.be.Array();
 						opts.collect.forEach((value, index) => {
 							value.should.be.eql(list[index]);
-						})
+						});
 						done();
-					})
+					});
 				bot.parse('test -c ' + list.join(' -c '));
 			});
 			it("should count repetitions", function(done) {
@@ -594,7 +593,7 @@ describe('parsing', function() {
 					.action((meta, opts) => {
 						opts.verbose.should.be.exactly(3);
 						done();
-					})
+					});
 				bot.parse('test -vvv');
 			});
 		});
@@ -611,7 +610,7 @@ describe('parsing', function() {
 					.action((meta, opts) => {
 						opts.size.should.be.exactly('large');
 						done();
-					})
+					});
 				bot.parse('test -s large');
 			});
 			it("should return default if not matches", function(done) {
@@ -620,7 +619,7 @@ describe('parsing', function() {
 					.action((meta, opts) => {
 						opts.size.should.be.exactly('medium');
 						done();
-					})
+					});
 				bot.parse('test -s test');
 			});
 			it("should return null if not matches and no default is defined", function(done) {
@@ -629,7 +628,7 @@ describe('parsing', function() {
 					.action((meta, opts) => {
 						(opts.drink).should.be.true();
 						done();
-					})
+					});
 				bot.parse('test -d');
 			});
 		});
@@ -670,7 +669,7 @@ describe('parsing', function() {
 			const testCmd = subcommandBot(bot);
 			testCmd
 				.command('subcmd')
-				.action(done)
+				.action(done);
 			bot.parse('test subcmd');
 		});
 	});

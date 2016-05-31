@@ -9,6 +9,67 @@ const util = require('util');
 const Fs = require('fs');
 const Path = require('path');
 
+
+
+/**
+ * Camel-case the given `flag`
+ *
+ * @param {String} flag
+ * @return {String}
+ * @api private
+ */
+
+function camelcase(flag) {
+	return flag.split('-').reduce(function(str, word) {
+		return str + word[0].toUpperCase() + word.slice(1);
+	});
+}
+
+/**
+ * Pad `str` to `width`.
+ *
+ * @param {String} str
+ * @param {Number} width
+ * @return {String}
+ * @api private
+ */
+
+function pad(str, width) {
+	var len = Math.max(0, width - str.length);
+	return str + Array(len + 1).join(' ');
+}
+
+/**
+ * Output help information if necessary
+ *
+ * @param {Command} command to output help for
+ * @param {Array} array of options to search for -h or --help
+ * @api private
+ */
+
+function outputHelpIfNecessary(cmd, opts, metadata) {
+	const options = opts || [];
+	if (options.find(opt => opt === '--help' || opt === '-h')) {
+		cmd.outputHelp(metadata);
+		return true;
+	}
+	return false;
+}
+
+/**
+ * Takes an argument an returns its human readable equivalent for help usage.
+ *
+ * @param {Object} arg
+ * @return {String}
+ * @api private
+ */
+
+function humanReadableArgName(arg) {
+	var nameOutput = arg.name + (arg.variadic === true ? '...' : '');
+
+	return arg.required ? '<' + nameOutput + '>' : '[' + nameOutput + ']';
+}
+
 /**
  * Initialize a new `Option` with the given `flags` and `description`.
  *
@@ -23,7 +84,9 @@ function Option(flags, description) {
 	this.optional = ~flags.indexOf('[');
 	this.bool = !~flags.indexOf('-no-');
 	flags = flags.split(/[ ,|]+/);
-	if (flags.length > 1 && !/^[[<]/.test(flags[1])) this.short = flags.shift();
+	if (flags.length > 1 && !/^[[<]/.test(flags[1])) {
+		this.short = flags.shift();
+	}
 	this.long = flags.shift();
 	this.description = description || '';
 }
@@ -74,7 +137,7 @@ util.inherits(BotCommand, EventEmitter);
  */
 BotCommand.prototype.setParseOptions = function(options) {
 	this.parseOpts = options;
-}
+};
 
 /**
  * Sets the prefix to search when parsing a line of text, this option is not inherited by subcommands otherwise it would
@@ -91,7 +154,7 @@ BotCommand.prototype.prefix = function(prefix) {
 		this.prefixes = prefix;
 	}
 	return this;
-}
+};
 
 /**
  * Add command `name`.
@@ -197,7 +260,9 @@ BotCommand.prototype.addImplicitHelpCommand = function() {
 BotCommand.prototype.parseExpectedArgs = function(argString) {
 	let args = argString.match(/(<.+?>)|(\[.+?\])/g);
 
-	if (!args || !args.length) return;
+	if (!args || !args.length) {
+		return;
+	}
 	var self = this;
 	args.forEach(function(arg, index) {
 		var argDetails = {
@@ -223,7 +288,7 @@ BotCommand.prototype.parseExpectedArgs = function(argString) {
 		if (argDetails.name.length > 3 && argDetails.name.slice(-3) === '...') {
 			argDetails.variadic = true;
 			argDetails.name = argDetails.name.slice(0, -3);
-			if (index != args.length - 1) {
+			if (index !== args.length - 1) {
 				throw new Error(`error: variadic arguments must be last ${argDetails.name}`);
 			}
 		}
@@ -280,14 +345,16 @@ BotCommand.prototype.action = function(fn) {
 		}
 
 		// Leftover arguments need to be pushed back. Fixes issue #56
-		if (parsed.args.length) args = parsed.args.concat(args);
+		if (parsed.args.length) {
+			args = parsed.args.concat(args);
+		}
 
 		let error = [];
 		self._args.forEach(function(arg, i) {
 			if (args[i] && args[i].match(/["'].+["']/)) {
 				args[i] = args[i].substring(1, args[i].length - 1);
 			}
-			if (arg.required && null == args[i]) {
+			if (arg.required && undefined === args[i]) {
 				error.push(self.missingArgument(arg.name));
 			} else if (arg.variadic) {
 				args[i] = args.splice(i);
@@ -308,7 +375,9 @@ BotCommand.prototype.action = function(fn) {
 	let parent = this.parent || this;
 	let name = parent === this ? '*' : this._name;
 	parent.on(name, listener);
-	if (this._alias) parent.on(this._alias, listener);
+	if (this._alias) {
+		parent.on(this._alias, listener);
+	}
 	return this;
 };
 
@@ -368,13 +437,13 @@ BotCommand.prototype.option = function(flags, description, fn, defaultValue) {
 		name = camelcase(oname);
 
 	// default as 3rd arg
-	if (typeof fn != 'function') {
+	if (typeof fn !== 'function') {
 		if (fn instanceof RegExp) {
 			var regex = fn;
 			fn = function(val, def) {
 				var m = regex.exec(val);
 				return m ? m[0] : def;
-			}
+			};
 		} else {
 			defaultValue = fn;
 			fn = null;
@@ -382,11 +451,15 @@ BotCommand.prototype.option = function(flags, description, fn, defaultValue) {
 	}
 
 	// preassign default value only for --no-*, [optional], or <required>
-	if (false == option.bool || option.optional || option.required) {
+	if (false === option.bool || option.optional || option.required) {
 		// when --no-* we make sure default is true
-		if (false == option.bool) defaultValue = true;
+		if (false === option.bool) {
+			defaultValue = true;
+		}
 		// preassign only if we have a default
-		if (undefined !== defaultValue) self[name] = defaultValue;
+		if (undefined !== defaultValue) {
+			self[name] = defaultValue;
+		}
 	}
 
 	// register the option
@@ -400,9 +473,9 @@ BotCommand.prototype.option = function(flags, description, fn, defaultValue) {
 		}
 
 		// unassigned or bool
-		if ('boolean' == typeof self[name] || 'undefined' == typeof self[name]) {
+		if ('boolean' === typeof self[name] || 'undefined' === typeof self[name]) {
 			// if no value, bool true, and we have a default, then use it!
-			if (null == val) {
+			if (!val) {
 				self[name] = option.bool ? defaultValue || true : false;
 			} else {
 				self[name] = val;
@@ -437,7 +510,7 @@ BotCommand.prototype.allowUnknownOption = function(arg) {
 BotCommand.prototype.setSend = function(cb) {
 	this.parseOpts.send = cb;
 	return this;
-}
+};
 
 /**
  * Show full command help when an error occurs
@@ -480,7 +553,7 @@ BotCommand.prototype.parse = function(line, metadata) {
 		line = line.substring(prefixFound.length);
 	}
 
-	const argv = line.split(/(\".+?\")|(\'.+?\')|\s+/g).filter(a => (a && a.length > 0));;
+	const argv = line.split(/(\".+?\")|(\'.+?\')|\s+/g).filter(a => (a && a.length > 0));
 	// store raw args
 	this.rawArgs = argv;
 
@@ -493,7 +566,7 @@ BotCommand.prototype.parse = function(line, metadata) {
 	}
 	this.args = parsed.args;
 	this.parseArgs(this.args, parsed.unknown, metadata);
-}
+};
 
 /**
  * Normalize `args`, splitting joined short flags. For example
@@ -521,13 +594,13 @@ BotCommand.prototype.normalize = function(args) {
 			break;
 		} else if (lastOpt && lastOpt.required) {
 			ret.push(arg);
-		} else if (arg.length > 1 && '-' == arg[0] && '-' != arg[1]) {
+		} else if (arg.length > 1 && '-' === arg[0] && '-' !== arg[1]) {
 			let value = null;
 			if (~(index = arg.indexOf('='))) {
 				value = arg.slice(index + 1);
 				arg = arg.slice(0, index);
 			}
-			arg.slice(1).split('').forEach(function(c) {
+			arg.slice(1).split('').forEach(c => {
 				ret.push('-' + c);
 			});
 			if (value) {
@@ -559,12 +632,12 @@ BotCommand.prototype.normalize = function(args) {
 
 BotCommand.prototype.parseArgs = function(args, unknown, metadata) {
 	var name;
-	if (args.length && args[0] != '') {
+	if (args.length && args[0] !== '') {
 		name = args[0];
-		if ('help' == name && 1 == args.length) {
+		if ('help' === name && 1 === args.length) {
 			this.outputHelp(metadata);
 			return;
-		} else if ('help' == name) {
+		} else if ('help' === name) {
 			args.shift();
 			name = args[0];
 			unknown.push('--help');
@@ -622,7 +695,7 @@ BotCommand.prototype.parseOptions = function(argv) {
 		arg = argv[i];
 
 		// literal args after --
-		if ('--' == arg) {
+		if ('--' === arg) {
 			literal = true;
 			continue;
 		}
@@ -639,14 +712,14 @@ BotCommand.prototype.parseOptions = function(argv) {
 			// requires arg
 			if (option.required) {
 				arg = argv[++i];
-				if (null == arg) {
+				if (!arg) {
 					error.push(this.optionMissingArgument(option));
 				}
 				this.emit(option.name(), arg);
 				// optional arg
 			} else if (option.optional) {
 				arg = argv[i + 1];
-				if (null == arg || ('-' == arg[0] && '-' != arg)) {
+				if (!arg || ('-' === arg[0] && '-' !== arg)) {
 					arg = null;
 				} else {
 					++i;
@@ -660,13 +733,13 @@ BotCommand.prototype.parseOptions = function(argv) {
 		}
 
 		// looks like an option
-		if (arg.length > 1 && '-' == arg[0]) {
+		if (arg.length > 1 && '-' === arg[0]) {
 			unknownOptions.push(arg);
 
 			// If the next argument looks like it might be
 			// an argument for this option, we pass it on.
 			// If it isn't, then it'll simply be ignored
-			if (argv[i + 1] && '-' != argv[i + 1][0]) {
+			if (argv[i + 1] && '-' !== argv[i + 1][0]) {
 				unknownOptions.push(argv[++i]);
 			}
 			continue;
@@ -718,7 +791,7 @@ BotCommand.prototype.missingArgument = function(name) {
 
 BotCommand.prototype.optionMissingArgument = function(option) {
 	return `  error: option ${option.flags} argument missing`;
-}
+};
 
 /**
  * Unknown option `flag`.
@@ -740,7 +813,9 @@ BotCommand.prototype.unknownOption = function(flag) {
  */
 
 BotCommand.prototype.description = function(str) {
-	if (0 === arguments.length) return this._description;
+	if (0 === arguments.length) {
+		return this._description;
+	}
 	this._description = str;
 	return this;
 };
@@ -754,7 +829,9 @@ BotCommand.prototype.description = function(str) {
  */
 
 BotCommand.prototype.alias = function(alias) {
-	if (0 == arguments.length) return this._alias;
+	if (0 === arguments.length) {
+		return this._alias;
+	}
 	this._alias = alias;
 	return this;
 };
@@ -774,7 +851,9 @@ BotCommand.prototype.usage = function(str) {
 
 	var usage = '[options]' + (this.commands.length ? ' [command]' : '') + (this._args.length ? ' ' + args.join(' ') : '');
 
-	if (0 == arguments.length) return this._usage || usage;
+	if (0 === arguments.length) {
+		return this._usage || usage;
+	}
 	this._usage = str;
 
 	return this;
@@ -831,7 +910,9 @@ BotCommand.prototype.optionHelp = function() {
  */
 
 BotCommand.prototype.commandHelp = function() {
-	if (!this.commands.length) return '';
+	if (!this.commands.length) {
+		return '';
+	}
 
 	var commands = this.commands.filter(function(cmd) {
 		return !cmd._noHelp;
@@ -882,7 +963,9 @@ BotCommand.prototype.help = function() {
 
 	var cmds = [];
 	var commandHelp = this.commandHelp();
-	if (commandHelp) cmds = [commandHelp];
+	if (commandHelp) {
+		cmds = [commandHelp];
+	}
 
 	var options = [
 		'  Options:', '', '' + this.optionHelp().replace(/^/gm, '    '), '', ''
@@ -952,7 +1035,7 @@ BotCommand.prototype.loadFile = function(path, file) {
 	if (require.extensions[ext]) {
 		try {
 			let script = require(full);
-			if (typeof script == 'function') {
+			if (typeof script === 'function') {
 				script(this);
 			}
 		} catch (error) {
@@ -960,7 +1043,7 @@ BotCommand.prototype.loadFile = function(path, file) {
 		}
 	}
 	return this;
-}
+};
 
 /**
  * Load all files in a path to be able to include subcommands
@@ -976,66 +1059,7 @@ BotCommand.prototype.load = function(path) {
 		this.loadFile(absPath, file);
 	});
 	return this;
-}
-
-/**
- * Camel-case the given `flag`
- *
- * @param {String} flag
- * @return {String}
- * @api private
- */
-
-function camelcase(flag) {
-	return flag.split('-').reduce(function(str, word) {
-		return str + word[0].toUpperCase() + word.slice(1);
-	});
-}
-
-/**
- * Pad `str` to `width`.
- *
- * @param {String} str
- * @param {Number} width
- * @return {String}
- * @api private
- */
-
-function pad(str, width) {
-	var len = Math.max(0, width - str.length);
-	return str + Array(len + 1).join(' ');
-}
-
-/**
- * Output help information if necessary
- *
- * @param {Command} command to output help for
- * @param {Array} array of options to search for -h or --help
- * @api private
- */
-
-function outputHelpIfNecessary(cmd, opts, metadata) {
-	const options = opts || [];
-	if (options.find(opt => opt == '--help' || opt == '-h')) {
-		cmd.outputHelp(metadata);
-		return true;
-	}
-	return false;
-}
-
-/**
- * Takes an argument an returns its human readable equivalent for help usage.
- *
- * @param {Object} arg
- * @return {String}
- * @api private
- */
-
-function humanReadableArgName(arg) {
-	var nameOutput = arg.name + (arg.variadic === true ? '...' : '');
-
-	return arg.required ? '<' + nameOutput + '>' : '[' + nameOutput + ']'
-}
+};
 
 /**
  * Expose the root command.

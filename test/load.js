@@ -11,7 +11,7 @@ describe('load', function() {
     const bot = new BotCommand();
     return bot.setSend(send)
       .allowUnknownOption(false);
-  }
+  };
   beforeEach(function() {
     output = "";
   });

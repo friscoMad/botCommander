@@ -1,3 +1,5 @@
+"use strict";
+
 const Path = require('path');
 
 module.exports = bot => {
