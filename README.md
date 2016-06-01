@@ -175,14 +175,15 @@ bot.parse('test -i 3 -f 3.2 -r 1..3 -o -c 1 -c 4 -vvv')
 ## Regular Expression
 
 ```js
-program
-  .version('0.0.1')
+bot
+  .command('pizza')
   .option('-s --size <size>', 'Pizza size', /^(large|medium|small)$/i, 'medium')
   .option('-d --drink [drink]', 'Drink', /^(coke|pepsi|izze)$/i)
-  .parse(process.argv);
+  .action((meta, opts) => {
+    console.log(' size: %j', opts.size);
+    console.log(' drink: %j', opts.drink);
+    });
   
-console.log(' size: %j', program.size);
-console.log(' drink: %j', program.drink);
 ```
 
 ## Subcommands
@@ -319,7 +320,7 @@ irc.on(event => {
 
 The help information is auto-generated based on the information bot commander already knows about your commands, so the following `--help` info is for free.
 
-This is the help output from the general [example](https://github.com/frisco82/botCommander/blob/master/examples/general.js), it will be sent when parsing 'help'
+This is the help output from the general [example](https://github.com/frisco82/botCommander/blob/master/examples/general.js), it will be sent when parsing `help`
 ```  
   Usage:  [options] [command]
 
@@ -337,7 +338,7 @@ This is the help output from the general [example](https://github.com/frisco82/b
     -h, --help  output usage information
 ```
 
-Every command has it's own command help, using the same example parsing 'copy -h', 'copy --help' or 'help copy' will render this:
+Every command has it's own command help, using the same example parsing `copy -h`, `copy --help` or `help copy` will render this:
 ```  
   Usage: copy [options] <file> <dest>
 
@@ -351,7 +352,7 @@ Every command has it's own command help, using the same example parsing 'copy -h
 ### .help()
 
 Returns the help information as a string, this can be helpfull for some error handling in your actions, or for customising the help implicit command.
-If the first command you define is 'help' the implicit help command will not be created so your command will be able to send a customized help.
+If the first command you define is `help` the implicit help command will not be created so your command will be able to send a customized help.
 The help command is diffent for every node in the command hierarchy so you can redefine whatever you want.
 
 ```js
@@ -372,17 +373,17 @@ bot
 
 Aside from the option argument in the command constructor (that currently is used only for noHelp), there are several functions that can alter the parsing and error handling for each command or the whole hierarchy.
 
-The shared configuration options are: ´.setSend()´, ´.allowUnknownOption()´ and ´.showHelpOnError()´.
+The shared configuration options are: `.setSend()`, `.allowUnknownOption()` and `.showHelpOnError()`.
 
- * ´.setSend()´: has already been discussed on the Output section.
- * ´.allowUnknownOption(boolean)´: Allows to disable errors when an unknown option is present in the command line. Default is to show an error.
- * ´.showHelpOnError(boolean)´: Allows to show or not the help when a parsing error is found, the parsing error is always reported but you can opt to not show the full help. Default is true.
+ * `.setSend()`: has already been discussed on the Output section.
+ * `.allowUnknownOption(boolean)`: Allows to disable errors when an unknown option is present in the command line. Default is to show an error.
+ * `.showHelpOnError(boolean)`: Allows to show or not the help when a parsing error is found, the parsing error is always reported but you can opt to not show the full help. Default is true.
 
 The configuration options that only affects one command are this three:
 
- * ´.prefix()´: Allows to configure a prefix (string) or an array of prefixes to search for at the start of parsing if they are not present the line will not be parsed, this is usefull for bots listening to group channels where you need to tell the bot what to parse. It can be used on any command but it is mainly used in the main object. Default is null.
- * ´.showHelpOnEmpty(boolean)´: Force to show the help when no command or subcommand is identified in the parsed line. Default is false.
- * ´.setParseOptions(object)´: Sets a new object as parse options for the command, this options are ´{send: null, allowUnknownOption: false, showHelpOnError: true }´ this function allows you to configure different options from the full hierarchy and any subcommand created after this call will inherit this options. After setting a new option object you can safely call any of the shared setting functions and will only affect this command and all subcommands created after the call.
+ * `.prefix()`: Allows to configure a prefix (string) or an array of prefixes to search for at the start of parsing if they are not present the line will not be parsed, this is usefull for bots listening to group channels where you need to tell the bot what to parse. It can be used on any command but it is mainly used in the main object. Default is null.
+ * `.showHelpOnEmpty(boolean)`: Force to show the help when no command or subcommand is identified in the parsed line. Default is false.
+ * `.setParseOptions(object)`: Sets a new object as parse options for the command, this options are `{send: null, allowUnknownOption: false, showHelpOnError: true }` this function allows you to configure different options from the full hierarchy and any subcommand created after this call will inherit this options. After setting a new option object you can safely call any of the shared setting functions and will only affect this command and all subcommands created after the call.
 
 ## Examples
 
