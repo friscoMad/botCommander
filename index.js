@@ -1061,9 +1061,14 @@ BotCommand.prototype.loadFile = function(path, file) {
 BotCommand.prototype.load = function(path) {
 	let absPath = Path.resolve(path);
 	Fs.accessSync(absPath);
-	Fs.readdirSync(absPath).sort().forEach(file => {
-		this.loadFile(absPath, file);
-	});
+	let stats = Fs.statSync(absPath);
+	if (stats.isFile()) {
+		this.loadFile(Path.dirname(absPath), Path.basename(absPath));
+	} else {
+		Fs.readdirSync(absPath).sort().forEach(file => {
+			this.loadFile(absPath, file);
+		});		
+	}
 	return this;
 };
 

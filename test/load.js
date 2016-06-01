@@ -24,6 +24,15 @@ describe('load', function() {
       })
       .parse("test1");
   });
+  it("should load a file2", function(done) {
+    const bot = basicBot();
+    bot.load('./test/loadTests/test1.js')
+      .setSend((meta, msg) => {
+        msg.should.be.eql('test1');
+        done();
+      })
+      .parse("test1");
+  });
   it("should fail if file or folder does not exists", function() {
     const bot = basicBot();
     (function() {
