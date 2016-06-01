@@ -14,7 +14,7 @@ let formatFile = (name, path, opts) => {
       name += '*';
     }    
   }
-  if (opts.L) {
+  if (opts.l) {
     let mode = convertModeToText(stat.mode);
     name = `${mode} ${stat.uid} ${stat.guid} ${stat.size}\t\t ${name}`
   }
@@ -43,18 +43,17 @@ let convertModeToText = mode => {
 
 module.exports = bot => {
   bot.command('ls [path]')
+    .description('list directory contents')
     .option('-F, --classify', 'append indicator (one of */=>@|) to entries')
     .option('-a, --all', 'do not ignore entries starting with .')
     .option('-l', 'use a long listing format')
     .action((meta, path, opts) => {
-      let lsPath = '.';
-      if (path) {
-        lsPath = Path.resolve(path);
-      }
-      var files = Fs.readdirSync(lsPath);
+      path = path || '.';
+      path = Path.resolve(meta.currDir, path);
+      let files = Fs.readdirSync(path);
       if (!opts.all) {
         files = files.filter(name => !name.startsWith('.'));
       }
-      bot.send(null, files.map(file => formatFile(file, lsPath, opts)).join("\n"));
+      bot.send(null, files.map(file => formatFile(file, path, opts)).join("\n"));
     });
 };

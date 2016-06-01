@@ -313,7 +313,7 @@ describe('parsing', function() {
 					.option('-e', 'option2')
 					.action((meta, opts) => {
 						opts.should.con;
-						(opts.E).should.be.true();
+						(opts.e).should.be.true();
 						done();
 					});
 				bot.parse('test -o -e');
@@ -354,7 +354,7 @@ describe('parsing', function() {
 					.action((meta, opts) => {
 						(opts.opt).should.be.true();
 						(opts.exists).should.be.true();
-						(opts.apples).should.be.true();
+						(opts.a).should.be.true();
 						done();
 					});
 				bot.parse('test -oe -a');
@@ -365,7 +365,7 @@ describe('parsing', function() {
 					.action((meta, opts) => {
 						(opts.opt).should.be.true();
 						(opts.exists).should.be.true();
-						(opts.apples).should.be.true();
+						(opts.verbose).should.be.true();
 						done();
 					});
 				bot.parse('test -oe --verbose');
@@ -421,8 +421,8 @@ describe('parsing', function() {
 					.option('-e', 'option2')
 					.action((meta, optional, opts) => {
 						should.not.exist(optional);
-						(opts.O).should.be.true();
-						(opts.E).should.be.true();
+						(opts.o).should.be.true();
+						(opts.e).should.be.true();
 						done();
 					});
 				bot.parse('test -oe');
@@ -436,7 +436,7 @@ describe('parsing', function() {
 					.option('-s [value]', 'option')
 					.option('-l --large [value]', 'option2')
 					.action((meta, opts) => {
-						(opts.S).should.be.eql('val');
+						(opts.s).should.be.eql('val');
 						(opts.large).should.be.eql('val2');
 						done();
 					});
@@ -449,7 +449,7 @@ describe('parsing', function() {
 					.option('-s [value]', 'option')
 					.option('-l --large [value]', 'option2')
 					.action((meta, opts) => {
-						(opts.S).should.be.eql('val');
+						(opts.s).should.be.eql('val');
 						(opts.large).should.be.eql('val2');
 						done();
 					});
@@ -461,7 +461,7 @@ describe('parsing', function() {
 					.command('test')
 					.option('-s [value]', 'option')
 					.action((meta, opts) => {
-						(opts.S).should.be.eql('val');
+						(opts.s).should.be.eql('val');
 						done();
 					});
 				bot.parse('test -s=val');
@@ -472,7 +472,7 @@ describe('parsing', function() {
 					.command('test')
 					.option('-s [value]', 'option', 'default')
 					.action((meta, opts) => {
-						(opts.S).should.be.eql('default');
+						(opts.s).should.be.eql('default');
 						done();
 					});
 				bot.parse('test');
@@ -510,6 +510,23 @@ describe('parsing', function() {
 				calledCount.should.be.eql(0);
 				output.indexOf('error: option -s <value> argument missing');
 			});
+			it("should clean options between parse calls", function() {
+				const bot = basicBot();
+				let cmd = bot.command('test')
+					.option('-o --opt', 'option')
+					.option('-v --verbose', 'verbose')
+					.action((meta, opts) => {
+						if (meta == 1) {
+							(opts.opt).should.be.true();
+							should.not.exists(opts.verbose);
+						} else {
+							(opts.verbose).should.be.true();
+							should.not.exists(opts.opt);							
+						}
+					});
+				bot.parse('test -o', 1);
+				bot.parse('test -v', 2);
+			});	
 		});
 		describe('#options with coercion', function() {
 			let range = val => val.split('..').map(Number);

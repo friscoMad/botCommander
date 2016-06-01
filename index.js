@@ -20,9 +20,12 @@ const Path = require('path');
  */
 
 function camelcase(flag) {
-	return flag.split('-').reduce(function(str, word) {
-		return str + word[0].toUpperCase() + word.slice(1);
-	});
+	flag = flag.replace(/^-+/, '');
+	if (flag.indexOf('-') !== -1) {
+		return flag.split('-').reduce((str, word) => str + word[0].toUpperCase() + word.slice(1));
+	} else {
+		return flag;
+	}
 }
 
 /**
@@ -126,6 +129,8 @@ function BotCommand(name) {
 	this._name = name || '';
 	this._alias = null;
 	this._msgBuffer = '';
+	this._optValues = {};
+	this._defaultOptValues = {};
 }
 
 util.inherits(BotCommand, EventEmitter);
@@ -321,6 +326,7 @@ BotCommand.prototype.action = function(fn) {
 		// Parse any so-far unknown options
 		args = args || [];
 		unknown = unknown || [];
+		self._optValues = {};
 
 		const parsed = self.parseOptions(unknown);
 		if (parsed.error.length > 0) {
@@ -458,7 +464,7 @@ BotCommand.prototype.option = function(flags, description, fn, defaultValue) {
 		}
 		// preassign only if we have a default
 		if (undefined !== defaultValue) {
-			self[name] = defaultValue;
+			self._defaultOptValues[name] = defaultValue;
 		}
 	}
 
@@ -469,20 +475,20 @@ BotCommand.prototype.option = function(flags, description, fn, defaultValue) {
 	this.on(oname, function(val) {
 		// coercion
 		if (null !== val && fn) {
-			val = fn(val, undefined === self[name] ? defaultValue : self[name]);
+			val = fn(val, undefined === self._optValues[name] ? defaultValue : self._optValues[name]);
 		}
 
 		// unassigned or bool
-		if ('boolean' === typeof self[name] || 'undefined' === typeof self[name]) {
+		if ('boolean' === typeof self._optValues[name] || 'undefined' === typeof self._optValues[name]) {
 			// if no value, bool true, and we have a default, then use it!
 			if (!val) {
-				self[name] = option.bool ? defaultValue || true : false;
+				self._optValues[name] = option.bool ? defaultValue || true : false;
 			} else {
-				self[name] = val;
+				self._optValues[name] = val;
 			}
 		} else if (null !== val) {
 			// reassign
-			self[name] = val;
+			self._optValues[name] = val;
 		}
 	});
 
@@ -765,7 +771,7 @@ BotCommand.prototype.opts = function() {
 	let self = this;
 	return this.options.reduce((res, opt) => {
 		const key = camelcase(opt.name());
-		res[key] = this[key];
+		res[key] = (this._optValues[key] !== undefined) ? this._optValues[key] : this._defaultOptValues[key];
 		return res;
 	}, {});
 };
