@@ -4,25 +4,25 @@
 
 ## Overview
 
-<!-- MarkdownTOC depth=3 autolink=true -->
+<!-- MarkdownTOC depth=3 autolink=true bracket=round -->
 
-- [Installation][installation]
-- [Command parsing][command-parsing]
-- [Specify the argument syntax][specify-the-argument-syntax]
-- [Variadic arguments][variadic-arguments]
-- [Option parsing][option-parsing]
-  - [Option Arguments][option-arguments]
-  - [Coercion][coercion]
-  - [Regular Expression][regular-expression]
-- [Subcommands][subcommands]
-- [Load plugins][load-plugins]
-- [Output][output]
-- [Metadata][metadata]
-- [Automated help][automated-help]
-  - [.help\(\)][help]
-- [Configuration][configuration]
-- [Examples][examples]
-- [License][license]
+- [Installation](#installation)
+- [Command parsing](#command-parsing)
+- [Specify the argument syntax](#specify-the-argument-syntax)
+- [Variadic arguments](#variadic-arguments)
+- [Option parsing](#option-parsing)
+  - [Option Arguments](#option-arguments)
+  - [Coercion](#coercion)
+  - [Regular Expression](#regular-expression)
+- [Subcommands](#subcommands)
+- [Load plugins](#load-plugins)
+- [Output](#output)
+- [Metadata](#metadata)
+- [Automated help](#automated-help)
+  - [.help\(\)](#help)
+- [Configuration](#configuration)
+- [Examples](#examples)
+- [License](#license)
 
 <!-- /MarkdownTOC -->
 
