@@ -92,6 +92,8 @@ function Option(flags, description) {
 	}
 	this.long = flags.shift();
 	this.description = description || '';
+	this.defaultValue = null;
+	this.parseValue = null;
 }
 
 /**
@@ -102,9 +104,9 @@ function Option(flags, description) {
  */
 
 Option.prototype.name = function() {
-	return this.long
+	return camelcase(this.long
 		.replace('--', '')
-		.replace('no-', '');
+		.replace('no-', ''));
 };
 
 /**
@@ -130,7 +132,6 @@ function BotCommand(name) {
 	this._alias = null;
 	this._msgBuffer = '';
 	this._optValues = {};
-	this._defaultOptValues = {};
 }
 
 util.inherits(BotCommand, EventEmitter);
@@ -322,13 +323,12 @@ BotCommand.prototype.parseExpectedArgs = function(argString) {
  */
 BotCommand.prototype.action = function(fn) {
 	let self = this;
-	const listener = function(args, unknown, metadata) {
+	const listener = function(prevParsed, metadata) {
 		// Parse any so-far unknown options
-		args = args || [];
-		unknown = unknown || [];
-		self._optValues = {};
+		let args = prevParsed.args || [];
+		let unknown = prevParsed.unknown || [];
 
-		const parsed = self.parseOptions(unknown);
+		const parsed = self.parseOptions(prevParsed.unknown);
 		if (parsed.error.length > 0) {
 			self._checkShowHelp(parsed.error);
 			self.send(metadata, parsed.error.join('\n'));
@@ -374,7 +374,7 @@ BotCommand.prototype.action = function(fn) {
 		for (let i = args.length; i < self._args.length; i++) {
 			args.push(null);
 		}
-		args.push(self.opts());
+		args.push(self.opts(prevParsed.values, parsed.values));
 		args.unshift(metadata);
 		fn.apply(self, args);
 	};
@@ -439,8 +439,7 @@ BotCommand.prototype.action = function(fn) {
 BotCommand.prototype.option = function(flags, description, fn, defaultValue) {
 	let self = this,
 		option = new Option(flags, description),
-		oname = option.name(),
-		name = camelcase(oname);
+		name = option.name();
 
 	// default as 3rd arg
 	if (typeof fn !== 'function') {
@@ -464,33 +463,32 @@ BotCommand.prototype.option = function(flags, description, fn, defaultValue) {
 		}
 		// preassign only if we have a default
 		if (undefined !== defaultValue) {
-			self._defaultOptValues[name] = defaultValue;
+			option.defaultValue = defaultValue;
 		}
 	}
 
-	// register the option
-	this.options.push(option);
-	// when it's passed assign the value
-	// and conditionally invoke the callback
-	this.on(oname, function(val) {
+	option.parseValue = (val, prevValue) => {
 		// coercion
-		if (null !== val && fn) {
-			val = fn(val, undefined === self._optValues[name] ? defaultValue : self._optValues[name]);
+		if (fn) {
+			val = fn(val, undefined === prevValue ? defaultValue : prevValue);
 		}
 
 		// unassigned or bool
-		if ('boolean' === typeof self._optValues[name] || 'undefined' === typeof self._optValues[name]) {
+		if ('boolean' === typeof prevValue || undefined === prevValue) {
 			// if no value, bool true, and we have a default, then use it!
 			if (!val) {
-				self._optValues[name] = option.bool ? defaultValue || true : false;
+				return option.bool ? defaultValue || true : false;
 			} else {
-				self._optValues[name] = val;
+				return val;
 			}
 		} else if (null !== val) {
 			// reassign
-			self._optValues[name] = val;
+			return val;
 		}
-	});
+	};
+
+	// register the option
+	this.options.push(option);
 
 	return this;
 };
@@ -570,8 +568,8 @@ BotCommand.prototype.parse = function(line, metadata) {
 		this.send(metadata, parsed.error.join('\n'));
 		return;
 	}
-	this.args = parsed.args;
-	this.parseArgs(this.args, parsed.unknown, metadata);
+	delete parsed.error;
+	this.parseArgs(parsed, metadata);
 };
 
 /**
@@ -636,8 +634,9 @@ BotCommand.prototype.normalize = function(args) {
  * @api private
  */
 
-BotCommand.prototype.parseArgs = function(args, unknown, metadata) {
-	var name;
+BotCommand.prototype.parseArgs = function(parsed, metadata) {
+	const args = parsed.args;
+	let name;
 	if (args.length && args[0] !== '') {
 		name = args[0];
 		if ('help' === name && 1 === args.length) {
@@ -646,23 +645,23 @@ BotCommand.prototype.parseArgs = function(args, unknown, metadata) {
 		} else if ('help' === name) {
 			args.shift();
 			name = args[0];
-			unknown.push('--help');
+			parsed.unknown.push('--help');
 			this.rawArgs = this.rawArgs.slice(1);
 			this.rawArgs.push('--help');
 		}
 		if (this.listeners(name).length) {
-			this.emit(args.shift(), args, unknown, metadata);
+			this.emit(args.shift(), parsed, metadata);
 		} else {
 			let command = this.commands.find(cmd => cmd._name === name || cmd._alias === name);
 			if (command) {
 				let line = this.rawArgs.slice(1).join(' ');
 				command.parse(line, metadata);
 			} else {
-				this.emit('*', args, null, metadata);
+				this.emit('*', parsed, metadata);
 			}
 		}
 	} else {
-		if (!outputHelpIfNecessary(this, unknown, metadata) && this._showHelpOnEmpty) {
+		if (!outputHelpIfNecessary(this, parsed.unknown, metadata) && this._showHelpOnEmpty) {
 			this.outputHelp(metadata);
 		}
 	}
@@ -690,9 +689,9 @@ BotCommand.prototype.optionFor = function(arg) {
  */
 
 BotCommand.prototype.parseOptions = function(argv) {
-	let args = [],
+	let args = [], error = [], values = {},
 		len = argv.length,
-		literal, option, arg, error = [];
+		literal, arg;
 
 	let unknownOptions = [];
 
@@ -712,16 +711,17 @@ BotCommand.prototype.parseOptions = function(argv) {
 		}
 
 		// find matching Option
-		option = this.optionFor(arg);
+		const option = this.optionFor(arg);
 		// option is defined
 		if (option) {
+			const name = option.name();
 			// requires arg
 			if (option.required) {
 				arg = argv[++i];
 				if (!arg) {
 					error.push(this.optionMissingArgument(option));
 				}
-				this.emit(option.name(), arg);
+				values[name] = option.parseValue(arg, values[name]);
 				// optional arg
 			} else if (option.optional) {
 				arg = argv[i + 1];
@@ -730,10 +730,10 @@ BotCommand.prototype.parseOptions = function(argv) {
 				} else {
 					++i;
 				}
-				this.emit(option.name(), arg);
+				values[name] = option.parseValue(arg, values[name]);
 				// bool
 			} else {
-				this.emit(option.name());
+				values[name] = option.parseValue(null, values[name]);
 			}
 			continue;
 		}
@@ -757,7 +757,8 @@ BotCommand.prototype.parseOptions = function(argv) {
 	return {
 		error: error,
 		args: args,
-		unknown: unknownOptions
+		unknown: unknownOptions,
+		values: values
 	};
 };
 
@@ -767,11 +768,11 @@ BotCommand.prototype.parseOptions = function(argv) {
  * @return {Object}
  * @api public
  */
-BotCommand.prototype.opts = function() {
+BotCommand.prototype.opts = function(prevValues, values) {
 	let self = this;
 	return this.options.reduce((res, opt) => {
 		const key = camelcase(opt.name());
-		res[key] = (this._optValues[key] !== undefined) ? this._optValues[key] : this._defaultOptValues[key];
+		res[key] = (values[key] !== undefined) ? values[key] : ((prevValues[key] !== undefined) ? prevValues[key] : opt.defaultValue);
 		return res;
 	}, {});
 };
