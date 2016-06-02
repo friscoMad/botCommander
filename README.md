@@ -1,7 +1,6 @@
 # BotCommander
 
-  The complete solution for [node.js](http://nodejs.org) interactive interfaces, focused in bots, inspired by [Commander.js](https://github.com/tj/commander.js).  
-
+  The complete solution for [node.js](http://nodejs.org) interactive interfaces, focused in bots, inspired by [Commander.js](https://github.com/tj/commander.js).
 
 ## Installation
 
@@ -17,7 +16,7 @@ Options can be passed with the call to `.command()`. Specifying `true` for `opts
 ```js
 const bot = require(bot-commander);
 
-bot.
+bot
   .command('test')
   .alias('testAlias')
   .description('This is a test command')
@@ -33,7 +32,7 @@ bot.
 
 
 let input = 'test';
-//This will parse the input and call the command the 'test' action.
+//This will parse the input and call the 'test' command action.
 bot.parse(input);
 ```
 
@@ -75,14 +74,13 @@ bot.parse("test 'this is the first argument'");
 
 ## Variadic arguments
 
- The last argument of a command can be variadic, and only the last argument.  To make an argument variadic you have to
- append `...` to the argument name.  Here is an example:
+ The last argument of a command can be variadic, and only the last argument.  To make an argument variadic you have to append `...` to the argument name.  Here is an example:
 
 ```js
 
 const bot = require(bot-commander);
 
-bot.
+bot
   .command('rmdir <dir> [otherDirs...]')
   .action((meta, dir, otherDirs) => {
     console.log('rmdir %s', dir);
@@ -96,7 +94,6 @@ bot.parse('rmdir dir1 dir2 dir3');
 
  An `Array` is used for the value of a variadic argument.
 
-
 ## Option parsing
 
  Options with commander are defined with the `.option()` method, also serving as documentation for the options. The example below parses args and options.
@@ -105,7 +102,7 @@ bot.parse('rmdir dir1 dir2 dir3');
 
 const bot = require(bot-commander);
 
-bot.
+bot
   .command('pizza')
   .option('-p, --peppers', 'Add peppers')
   .option('-P, --pineapple', 'Add pineapple')
@@ -118,14 +115,35 @@ bot.
     if (opts.bbqSauce) console.log('  - bbq');
     console.log('  - %s cheese', opts.cheese);  
   });
-
 ```
 
  Short flags may be passed as a single arg, for example `-abc` is equivalent to `-a -b -c`. Multi-word options such as "--template-engine" are camel-cased, becoming `templateEngine` etc.
 
+### Option Arguments
 
+Options can have their own arguments, that are defined the same way as regular arguments, by default they are treated as string except if the option name contains `-no-` like in `--no-flag` this will make the option boolean and have a default value of `true` and setting the flag will set the value to `false` even if using a short version.
 
-## Coercion
+```js
+
+const bot = require(bot-commander);
+
+bot
+  .command('pizza')
+  .option('-p, --no-pineapple', 'Remove pineapple')
+  .option('-opt <required>', 'option with required argument')
+  .option('-opt2 [optional]', 'option with optional argument')
+  .action((meta, opts) => {
+    if (opts.pineapple) console.log('You ordered a pizza with pineapple');
+  });
+
+bot.parse('pizza -p'); //No output
+bot.parse('--no-pineapple'); //No output
+bot.parse('pizza'); //'You ordered a pizza with pineapple'
+```
+
+Arguments can be separated from the option using spaces or equals.
+
+### Coercion
 
 Options can also have it's own values, and can be parsed with custom functions to fit your needs.
 The third parameter of the `.option()` method accepts a default value, a regex or a function. In case a function is passed it will be called when a value is parsed and its return value will be stored for the action callback.
@@ -172,7 +190,7 @@ bot
 bot.parse('test -i 3 -f 3.2 -r 1..3 -o -c 1 -c 4 -vvv')
 ```
 
-## Regular Expression
+### Regular Expression
 
 ```js
 bot
@@ -199,7 +217,7 @@ let cmd = bot.
 
 cmd
   .command('install [name]')
-    .description('install one or more packages');
+  .description('install one or more packages');
 
 cmd 
   .command('search [query]')
@@ -222,12 +240,12 @@ When a subcommand is created, a help command is created by default that shows th
 
 const bot = require(bot-commander);
 
-let cmd = bot.
+let cmd = bot
   .command('pack')
 
 cmd
   .command('install [name]')
-    .description('install one or more packages');
+  .description('install one or more packages');
 
 bot.parse('help');
 //Will output only help and pack usage
@@ -237,7 +255,7 @@ bot.parse('pack help'); //or 'pack -h'
 
 The parent command can have an action if desired, it will be called if no subcommand is used, in case you want to require a subcommand you can force it with `bot.command('main <subcommand>')` as with any command or if you only want to show the help without an error then use `.showHelpOnEmpty()`.
 
-### Load plugins
+## Load plugins
 
 Another feature of the library is the hability to load commands from external files, it is really easy with `.load(path)` if the path is a file and exports function it will be called with parser as the only argument so it can add commands or even call load itself.
 Take into account that relative paths are resolved from the main script path.
@@ -286,7 +304,6 @@ The send function is shared by the whole hierarchy of commands so it can be set 
 
 As you probably have noted, through the whole library there are metadata arguments, this may seem a bit strange at first but the library it is designed to configure a stateless parser and then reuse many times even simultaneusly, think of an irc bot receiving commands from several users. The metadata object is passed from the parser call to actions and send function to be able to use all the metadata around the text being parsed this could be usefull for time data, from and to information, the channel, etc.
 The library does not make use of it or manipulate in any way, you can use it as you need.
-
 
 For example using a fictional irc library with `.on()` and `.send()` functions this could be a simple irc bot.
 
@@ -375,15 +392,15 @@ Aside from the option argument in the command constructor (that currently is use
 
 The shared configuration options are: `.setSend()`, `.allowUnknownOption()` and `.showHelpOnError()`.
 
- * `.setSend()`: has already been discussed on the Output section.
- * `.allowUnknownOption(boolean)`: Allows to disable errors when an unknown option is present in the command line. Default is to show an error.
- * `.showHelpOnError(boolean)`: Allows to show or not the help when a parsing error is found, the parsing error is always reported but you can opt to not show the full help. Default is true.
+* `.setSend()`: has already been discussed on the Output section.
+* `.allowUnknownOption(boolean)`: Allows to disable errors when an unknown option is present in the command line. Default is to show an error.
+* `.showHelpOnError(boolean)`: Allows to show or not the help when a parsing error is found, the parsing error is always reported but you can opt to not show the full help. Default is true.
 
 The configuration options that only affects one command are this three:
 
- * `.prefix()`: Allows to configure a prefix (string) or an array of prefixes to search for at the start of parsing if they are not present the line will not be parsed, this is usefull for bots listening to group channels where you need to tell the bot what to parse. It can be used on any command but it is mainly used in the main object. Default is null.
- * `.showHelpOnEmpty(boolean)`: Force to show the help when no command or subcommand is identified in the parsed line. Default is false.
- * `.setParseOptions(object)`: Sets a new object as parse options for the command, this options are `{send: null, allowUnknownOption: false, showHelpOnError: true }` this function allows you to configure different options from the full hierarchy and any subcommand created after this call will inherit this options. After setting a new option object you can safely call any of the shared setting functions and will only affect this command and all subcommands created after the call.
+* `.prefix()`: Allows to configure a prefix (string) or an array of prefixes to search for at the start of parsing if they are not present the line will not be parsed, this is usefull for bots listening to group channels where you need to tell the bot what to parse. It can be used on any command but it is mainly used in the main object. Default is null.
+* `.showHelpOnEmpty(boolean)`: Force to show the help when no command or subcommand is identified in the parsed line. Default is false.
+*`.setParseOptions(object)`: Sets a new object as parse options for the command, this options are `{send: null, allowUnknownOption: false, showHelpOnError: true }` this function allows you to configure different options from the full hierarchy and any subcommand created after this call will inherit this options. After setting a new option object you can safely call any of the shared setting functions and will only affect this command and all subcommands created after the call.
 
 ## Examples
 
