@@ -14,7 +14,7 @@
     "email": "rapariciog@gmail.com"
   },
   "scripts": {
-    "test": "node_modules/.bin/mocha -w"
+    "test": "node_modules/.bin/mocha"
   },
   "license": "MIT",
   "dependencies": {},
