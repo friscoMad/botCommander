@@ -5,7 +5,7 @@ before_script:
   - npm install -g mocha
   - npm install -g codecov
 script:
-  - istanbul cover mocha --report lcovonly -- -R spec
+  - istanbul cover mocha -- -R spec
   - codecov
 node_js:
   - "4"
