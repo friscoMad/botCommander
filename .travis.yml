@@ -1,5 +1,11 @@
 language: node_js
 sudo: false
+before_script: 
+- npm install -g istanbul
+- npm install -g mocha
+script: istanbul cover mocha
 node_js:
   - "4"
   - "node"
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
