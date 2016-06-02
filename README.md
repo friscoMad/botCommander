@@ -1,6 +1,6 @@
 # BotCommander
 
-  The complete solution for [node.js](http://nodejs.org) interactive interfaces, focused in bots, inspired by [Commander.js](https://github.com/tj/commander.js).
+  The complete solution for [node.js](http://nodejs.org) interactive interfaces, focused in bots, based on and inspired by [Commander.js](https://github.com/tj/commander.js).
 
 ## Overview
 
