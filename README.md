@@ -2,6 +2,31 @@
 
   The complete solution for [node.js](http://nodejs.org) interactive interfaces, focused in bots, inspired by [Commander.js](https://github.com/tj/commander.js).
 
+## Overview
+
+<!-- MarkdownTOC depth=3 autolink=true -->
+
+- [Installation][installation]
+- [Command parsing][command-parsing]
+- [Specify the argument syntax][specify-the-argument-syntax]
+- [Variadic arguments][variadic-arguments]
+- [Option parsing][option-parsing]
+  - [Option Arguments][option-arguments]
+  - [Coercion][coercion]
+  - [Regular Expression][regular-expression]
+- [Subcommands][subcommands]
+- [Load plugins][load-plugins]
+- [Output][output]
+- [Metadata][metadata]
+- [Automated help][automated-help]
+  - [.help\(\)][help]
+- [Configuration][configuration]
+- [Examples][examples]
+- [License][license]
+
+<!-- /MarkdownTOC -->
+
+
 ## Installation
 
     $ npm install bot-commander
