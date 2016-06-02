@@ -1,11 +1,12 @@
 language: node_js
 sudo: false
-before_script: 
-- npm install -g istanbul
-- npm install -g mocha
-script: istanbul cover mocha
+before_script:
+  - npm install -g istanbul
+  - npm install -g mocha
+  - npm install -g codecov
+script:
+  - istanbul cover mocha --report lcovonly -- -R spec
+  - codecov
 node_js:
   - "4"
   - "node"
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
