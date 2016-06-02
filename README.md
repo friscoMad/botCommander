@@ -1,5 +1,9 @@
 # BotCommander
 
+[![Build Status](https://api.travis-ci.org/frisco82/botCommander.svg?style=flat)](http://travis-ci.org/frisco82/botCommander)
+[![NPM Version](http://img.shields.io/npm/v/bot-commander.svg?style=flat)](https://www.npmjs.org/package/commander)
+[![NPM Downloads](https://img.shields.io/npm/dt/bot-commander.svg?style=flat)](https://www.npmjs.org/package/commander)
+
   The complete solution for [node.js](http://nodejs.org) interactive interfaces, focused in bots, based on and inspired by [Commander.js](https://github.com/tj/commander.js).
 
 ## Overview
