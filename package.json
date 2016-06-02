@@ -1,7 +1,7 @@
 {
   "name": "bot-commander",
-  "version": "0.0.1",
-  "description": "library for command parsing, designed for interactive input (chat)",
+  "version": "1.0.0",
+  "description": "library for command parsing, designed for interactive input like chat bots",
   "main": "index.js",
   "keywords": [
     "command",
