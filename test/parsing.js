@@ -91,6 +91,18 @@ describe('parsing', function() {
 				});
 			bot.parse('test', testMetadata);
 		});
+		it("should not call send if null or empty", function(done) {
+			const bot = new BotCommand();
+			let cmd = bot.command('test')
+				.action(meta => {
+					bot.send(meta, null);
+					bot.send(meta);
+					bot.send(meta, '');
+					done();
+				})
+				.setSend(sendError);
+			bot.parse('test', testMetadata);
+		});
 	});
 	describe('#basic commands', function() {
 		it("should call the command if matches", function(done) {
@@ -274,6 +286,17 @@ describe('parsing', function() {
 			});
 			bot.parse('test \'test test\'');
 		});
+		it("should parse arguments even if prefixed if -- is in front of them", function(done) {
+			const bot = basicBot();
+			bot.command('test <arg> [optional]')
+			.action((meta, arg, optional) => {
+				arg.should.be.eql('-test');
+				optional.should.be.eql('--test-test');
+				done();
+			});
+			bot.parse('test -- -test -- --test-test');
+		});
+
 	});
 	describe('#options', function() {
 		describe('#general options', function() {
@@ -427,6 +450,20 @@ describe('parsing', function() {
 					});
 				bot.parse('test -oe');
 			});
+			it("should camel case options names", function(done) {
+				const bot = basicBot();
+				let cmd = bot
+					.command('test [optional]')
+					.option('-o, -option-name', 'option')
+					.option('-e -extra-large-name', 'option2')
+					.action((meta, optional, opts) => {
+						should.not.exist(optional);
+						(opts.optionName).should.be.true();
+						(opts.extraLargeName).should.be.true();
+						done();
+					});
+				bot.parse('test -oe');
+			});
 		});
 		describe('#options with values', function() {
 			it("should pass arguments values", function(done) {
@@ -441,6 +478,17 @@ describe('parsing', function() {
 						done();
 					});
 				bot.parse('test -s val -l val2');
+			});
+			it("should pass arguments global values", function(done) {
+				const bot = basicBot();
+				let cmd = bot
+					.option('-s [value]', 'option')
+					.command('test')
+					.action((meta, opts) => {
+						(opts.s).should.be.eql('val');
+						done();
+					});
+				bot.parse('test -s val');
 			});
 			it("should pass long arguments values using =", function(done) {
 				const bot = basicBot();
@@ -493,6 +541,17 @@ describe('parsing', function() {
 				let cmd = bot
 					.command('test')
 					.option('-s <value>', 'option')
+					.action(countCalls)
+					.setSend(send);
+				bot.parse('test -s');
+				calledCount.should.be.eql(0);
+				output.indexOf('error: option -s <value> argument missing');
+			});
+			it("should require required values if global option is present", function() {
+				const bot = basicBot();
+				let cmd = bot
+					.option('-s <value>', 'option')
+					.command('test')
 					.action(countCalls)
 					.setSend(send);
 				bot.parse('test -s');

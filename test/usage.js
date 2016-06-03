@@ -11,6 +11,14 @@ describe('usage', function() {
       .description(description);
     (bot.help().indexOf(description)).should.be.above(0);
   });
+  it("should allow you to configure the usage line", function() {
+    const bot = new BotCommand();
+    const usage = '[custom options] //test';
+    bot
+      .usage(usage)
+      .command('test');
+    (bot.help().indexOf(usage)).should.be.above(0);
+  });
   it("should show commands", function() {
     const bot = new BotCommand();
     const commands = ['test1', 'test2 [option] [option]', 'test3 <option>', 'test4 <option> [option]', 'test5 <option> [options...]', 'test5 <"test test"> [\'test2 test3\']'];
@@ -26,6 +34,13 @@ describe('usage', function() {
       .command('test')
       .alias('test2');
     (bot.help().indexOf('test|test2')).should.be.above(0);
+  });
+  it("should show command alias and name in command help", function() {
+    const bot = new BotCommand();
+    let cmd = bot
+      .command('test')
+      .alias('test2');
+    (cmd.help().indexOf('test|test2')).should.be.above(0);
   });
   it("should show arguments", function() {
     const bot = new BotCommand();
@@ -86,5 +101,23 @@ describe('usage', function() {
       .option('-d --drink [drink]', 'Drink')
       .description('Order your pizza');
     bot.parse('help');
+  });
+  it("should send help if requested", function() {
+    const bot = new BotCommand();
+    bot.setSend((meta, msg) => {
+      msg.should.be.equal(bot.help());
+    })
+      .command('pizza')
+    bot.parse('-h');
+    bot.parse('help');
+  });
+  it("should send command help if requested", function() {
+    const bot = new BotCommand();
+    let cmd = bot.command('pizza');
+    bot.setSend((meta, msg) => {
+      msg.should.be.equal(cmd.help());
+    })      
+    bot.parse('pizza -h');
+    bot.parse('help pizza');
   });
 });

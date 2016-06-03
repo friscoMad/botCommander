@@ -770,11 +770,14 @@ BotCommand.prototype.parseOptions = function(argv) {
  */
 BotCommand.prototype.opts = function(prevValues, values) {
 	let self = this;
+	let res = Object.assign({}, prevValues, values);
 	return this.options.reduce((res, opt) => {
 		const key = camelcase(opt.name());
-		res[key] = (values[key] !== undefined) ? values[key] : ((prevValues[key] !== undefined) ? prevValues[key] : opt.defaultValue);
+		if (res[key] == null) {
+			res[key] = opt.defaultValue;
+		}
 		return res;
-	}, {});
+	}, res);
 };
 
 /**
