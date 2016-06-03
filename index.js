@@ -266,7 +266,7 @@ BotCommand.prototype.addImplicitHelpCommand = function() {
 BotCommand.prototype.parseExpectedArgs = function(argString) {
 	let args = argString.match(/(<.+?>)|(\[.+?\])/g);
 
-	if (!args || !args.length) {
+	if (args == null || args.length === 0) {
 		return;
 	}
 	var self = this;
@@ -342,7 +342,7 @@ BotCommand.prototype.action = function(fn) {
 		// If there are still any unknown options, then we simply
 		// die, unless someone asked for help, in which case we give it
 		// to them, and then we die.
-		if (parsed.unknown.length > 0 && !self.parseOpts.allowUnknownOption) {
+		if (parsed.unknown.length > 0 && self.parseOpts.allowUnknownOption === false) {
 			let msg = [];
 			msg.push(self.unknownOption(parsed.unknown[0]));
 			self._checkShowHelp(msg);
@@ -360,7 +360,7 @@ BotCommand.prototype.action = function(fn) {
 			if (args[i] && args[i].match(/["'].+["']/)) {
 				args[i] = args[i].substring(1, args[i].length - 1);
 			}
-			if (arg.required && undefined === args[i]) {
+			if (arg.required && args[i] == null) {
 				error.push(self.missingArgument(arg.name));
 			} else if (arg.variadic) {
 				args[i] = args.splice(i);
@@ -470,13 +470,13 @@ BotCommand.prototype.option = function(flags, description, fn, defaultValue) {
 	option.parseValue = (val, prevValue) => {
 		// coercion
 		if (fn) {
-			val = fn(val, undefined === prevValue ? defaultValue : prevValue);
+			val = fn(val, prevValue == null ? defaultValue : prevValue);
 		}
 
 		// unassigned or bool
-		if ('boolean' === typeof prevValue || undefined === prevValue) {
+		if ('boolean' === typeof prevValue || prevValue == null) {
 			// if no value, bool true, and we have a default, then use it!
-			if (!val) {
+			if (val == null) {
 				return option.bool ? defaultValue || true : false;
 			} else {
 				return val;
@@ -551,7 +551,7 @@ BotCommand.prototype.parse = function(line, metadata) {
 	if (this.prefixes) {
 		let prefixFound = this.prefixes.find(prefix => line.startsWith(prefix));
 		//Nothing to do if there was no prefix found
-		if (!prefixFound) {
+		if (prefixFound == null) {
 			return;
 		}
 		line = line.substring(prefixFound.length);
@@ -718,14 +718,14 @@ BotCommand.prototype.parseOptions = function(argv) {
 			// requires arg
 			if (option.required) {
 				arg = argv[++i];
-				if (!arg) {
+				if (arg == null) {
 					error.push(this.optionMissingArgument(option));
 				}
 				values[name] = option.parseValue(arg, values[name]);
 				// optional arg
 			} else if (option.optional) {
 				arg = argv[i + 1];
-				if (!arg || ('-' === arg[0] && '-' !== arg)) {
+				if (arg == null || ('-' === arg[0] && '-' !== arg)) {
 					arg = null;
 				} else {
 					++i;
@@ -917,12 +917,12 @@ BotCommand.prototype.optionHelp = function() {
  */
 
 BotCommand.prototype.commandHelp = function() {
-	if (!this.commands.length) {
+	if (this.commands.length === 0) {
 		return '';
 	}
 
 	var commands = this.commands.filter(function(cmd) {
-		return !cmd._noHelp;
+		return cmd._noHelp !== true;
 	}).map(function(cmd) {
 		var args = cmd._args.map(function(arg) {
 			return humanReadableArgName(arg);
