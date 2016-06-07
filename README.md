@@ -1,6 +1,7 @@
 # BotCommander
 
 [![Build Status](https://api.travis-ci.org/frisco82/botCommander.svg?style=flat)](http://travis-ci.org/frisco82/botCommander)
+[![codecov](https://img.shields.io/codecov/c/github/frisco82/botCommander.svg?style=flat)](https://codecov.io/gh/frisco82/botCommander)
 [![NPM Version](http://img.shields.io/npm/v/bot-commander.svg?style=flat)](https://www.npmjs.org/package/bot-commander)
 [![NPM Downloads](https://img.shields.io/npm/dt/bot-commander.svg?style=flat)](https://www.npmjs.org/package/bot-commander)
 
