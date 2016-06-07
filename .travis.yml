@@ -9,6 +9,6 @@ script:
   - ls -al coverage
   - cat coverage/lcov.info
   - bash <(curl -s https://codecov.io/bash) -f coverage/lcov.info -d
-  de_js:
+de_js:
   - "4"
   - "node"
