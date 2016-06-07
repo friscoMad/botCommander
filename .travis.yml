@@ -6,6 +6,7 @@ before_script:
   - npm install -g codecov
 script:
   - istanbul cover mocha -- -R spec
+  - ls -al
   - codecov
 node_js:
   - "4"
