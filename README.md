@@ -420,10 +420,11 @@ bot
 
 Aside from the option argument in the command constructor (that currently is used only for noHelp), there are several functions that can alter the parsing and error handling for each command or the whole hierarchy.
 
-The shared configuration options are: `.setSend()`, `.allowUnknownOption()` and `.showHelpOnError()`.
+The shared configuration options are: `.setSend()`, `.allowUnknownOption()`, `lowerCase()` and `.showHelpOnError()`.
 
 * `.setSend()`: has already been discussed on the Output section.
 * `.allowUnknownOption(boolean)`: Allows to disable errors when an unknown option is present in the command line. Default is to show an error.
+* `.lowerCase(boolean)`: Configures the parser to check commands in lower case (options and argmuents are not changed).
 * `.showHelpOnError(boolean)`: Allows to show or not the help when a parsing error is found, the parsing error is always reported but you can opt to not show the full help. Default is true.
 
 The configuration options that only affects one command are this three:

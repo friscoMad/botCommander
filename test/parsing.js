@@ -296,7 +296,17 @@ describe('parsing', function() {
 			});
 			bot.parse('test -- -test -- --test-test');
 		});
-
+		it("should parse in lower case if directed", function() {
+			const bot = basicBot();
+			bot.command('test')
+			.lowerCase(true)
+			.action(countCalls);
+			bot.parse('test');
+			bot.parse('TEST');
+			bot.parse('Test');
+			bot.parse('tESt');
+			(calledCount).should.be.eql(4);
+		});
 	});
 	describe('#options', function() {
 		describe('#general options', function() {

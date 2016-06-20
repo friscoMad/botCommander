@@ -121,7 +121,8 @@ function BotCommand(name) {
 	this.parseOpts = {
 		send: null,
 		allowUnknownOption: false,
-		showHelpOnError: true
+		showHelpOnError: true, 
+		lowerCase: false
 	};
 	this._showHelpOnEmpty = false;
 	this.commands = [];
@@ -539,6 +540,17 @@ BotCommand.prototype.showHelpOnEmpty = function(arg) {
 };
 
 /**
+ * Parse all commands in lower case
+ *
+ * @param {Boolean} arg if `true` or omitted it will check for commands in lowercase
+ * @api public
+ */
+BotCommand.prototype.lowerCase = function(arg) {
+	this.parseOpts.lowerCase = arguments.length === 0 || arg;
+	return this;
+};
+
+/**
  * Parse line of text, settings options and invoking commands actions when defined.
  * If there is no command defined in the line or there is some error the help will be sent.
  *
@@ -639,6 +651,9 @@ BotCommand.prototype.parseArgs = function(parsed, metadata) {
 	let name;
 	if (args.length && args[0] !== '') {
 		name = args[0];
+		if (this.parseOpts.lowerCase) {
+			name = name.toLowerCase();
+		}
 		if ('help' === name && 1 === args.length) {
 			this.outputHelp(metadata);
 			return;
@@ -650,7 +665,8 @@ BotCommand.prototype.parseArgs = function(parsed, metadata) {
 			this.rawArgs.push('--help');
 		}
 		if (this.listeners(name).length) {
-			this.emit(args.shift(), parsed, metadata);
+			args.shift();
+			this.emit(name, parsed, metadata);
 		} else {
 			let command = this.commands.find(cmd => cmd._name === name || cmd._alias === name);
 			if (command) {
