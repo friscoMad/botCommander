@@ -103,6 +103,32 @@ describe('parsing', function() {
 				.setSend(sendError);
 			bot.parse('test', testMetadata);
 		});
+		it("should return the value the send function returns", function(done) {
+			const bot = new BotCommand();
+			let cmd = bot.command('test')
+				.action(meta => {
+					let ret = bot.send(meta, "test");
+					ret.should.be.equal("test"); 
+					ret = bot.send(meta);
+					should.not.exist(ret);
+					done();
+				})
+				.setSend((meta, a) => a);
+			bot.parse('test', testMetadata);
+		});
+		it("should return the value the send function returns 2", function(done) {
+			const bot = new BotCommand();
+			let cmd = bot.command('test')
+				.action(meta => {
+					let ret = bot.send(meta, "1");
+					ret.should.be.equal("11");
+					ret = bot.send(meta, "test");
+					ret.should.be.equal("test1");
+					done();
+				})
+				.setSend((meta, a) => a + "1");
+			bot.parse('test', testMetadata);
+		});
 	});
 	describe('#basic commands', function() {
 		it("should call the command if matches", function(done) {
