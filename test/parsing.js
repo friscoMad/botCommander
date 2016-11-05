@@ -281,7 +281,8 @@ describe('parsing', function() {
 			bot
 				.command('test [args...]')
 				.action((meta, args2) => {
-					(args2.length).should.be.empty();
+					should.exist(args2);
+					(args2.length).should.be.eql(0);
 					done();
 				});
 			bot.parse('test');

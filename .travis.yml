@@ -9,4 +9,5 @@ script:
   - codecov
 node_js:
   - "4"
+  - "--lts"
   - "node"
