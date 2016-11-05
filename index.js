@@ -1023,7 +1023,7 @@ BotCommand.prototype.outputHelp = function(metadata) {
  */
 BotCommand.prototype.send = function(metadata, msg) {
 	if (msg && msg.length > 0) {
-		this.parseOpts.send(metadata, msg);
+		return this.parseOpts.send(metadata, msg);
 	}
 };
 
