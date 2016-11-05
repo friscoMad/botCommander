@@ -1,5 +1,9 @@
 #Changelog
 
+## 1.1.1 
+
+ * The bot.send returns back the same value that the send functions returns.
+
 ## 1.1.0 
 
  * Added new inherited setting to check commands always in lowercase, this does not affect arguments or options.
