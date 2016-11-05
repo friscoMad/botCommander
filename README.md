@@ -314,7 +314,7 @@ The load function can also be used under a command, in that case the plugins wil
 
 As the library is intended for interactive usage and mainly bots, it will not output anything in the console unless your actions print anything. All communication from the library itself is done via a configurable send function, it will only be used for help and missing arguments. By default the send function is undefined, so be sure to configure it before parsing anything with `.setSend(cb)` the callback function receive 2 arguments, [metadata](#metadata) and the message to send.
 
-The same function can be used in your actions to provide a single point of configuration for your interface.
+The `.send()` function can be used in your actions to output anything and will use the function previously configured using `.setSend()`. This function will check that the message is defined before calling the configured function and will return the same that the function returns.
 
 ```js
 const bot = require(bot-commander);
@@ -322,7 +322,10 @@ const bot = require(bot-commander);
 bot
   .setSend((meta, message) => console.log(message))
   .command('test')
-  .action(meta => bot.send(meta, 'message'))
+  .action(meta => {
+    //ret will be null as console.log does not have a return value
+	let ret = bot.send(meta, 'message');
+  });
 
 bot.parse('test');
 //Will send 'message' through the configured send function.
