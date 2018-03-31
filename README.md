@@ -197,7 +197,7 @@ function increaseVerbosity(v, total) {
 }
 
 bot
-  .commnad('test')
+  .command('test')
   .option('-i, --integer <n>', 'An integer argument', parseInt)
   .option('-f, --float <n>', 'A float argument', parseFloat)
   .option('-r, --range <a>..<b>', 'A range', range)
