@@ -8,6 +8,6 @@ script:
   - istanbul cover _mocha -- -R spec
   - codecov
 node_js:
-  - "4"
+  - "8"
   - "--lts"
   - "node"
