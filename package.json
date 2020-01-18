@@ -14,9 +14,10 @@
     "email": "rapariciog@gmail.com"
   },
   "scripts": {
-    "cover-win": "istanbul cover %APPDATA%/npm/node_modules/mocha/bin/_mocha",
+    "test-cover": "nyc --reporter=lcov mocha",
     "test": "mocha",
-    "test-debug": "mocha --inspect-brk"
+    "test-debug": "mocha --inspect-brk",
+    "coverage": "codecov"
   },
   "license": "MIT",
   "dependencies": {},
