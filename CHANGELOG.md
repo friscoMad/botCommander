@@ -1,5 +1,9 @@
 #Changelog
 
+## 1.1.2 
+
+ * Bug #6: Implicit help override (creating a 'help' command as the first one) was not working and help always returned the default one.
+
 ## 1.1.1 
 
  * The bot.send returns back the same value that the send functions returns.
