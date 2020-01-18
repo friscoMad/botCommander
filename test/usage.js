@@ -120,4 +120,26 @@ describe('usage', function() {
     bot.parse('pizza -h');
     bot.parse('help pizza');
   });
+  it("should send command help if requested (with action)", function() {
+    const bot = new BotCommand();
+    let cmd = bot.command('pizza')
+      .action(_ => {});
+    bot.setSend((meta, msg) => {
+      msg.should.be.equal(cmd.help());
+    })      
+    bot.parse('pizza -h');
+    bot.parse('help pizza');
+  });
+  it("should send custom help if defined", function() {
+    const bot = new BotCommand();
+    bot.command('help')
+      .action(meta => {
+        bot.send(meta, "test");
+    });
+    bot.setSend((meta, msg) => {
+      msg.should.be.equal("test");
+    })      
+    bot.parse('help');
+  });
+
 });

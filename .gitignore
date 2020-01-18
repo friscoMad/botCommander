@@ -39,3 +39,5 @@ jspm_packages
 # Sublime project
 *.sublime-project
 *.sublime-workspace
+
+.vscode

@@ -1011,7 +1011,16 @@ BotCommand.prototype.help = function() {
  */
 
 BotCommand.prototype.outputHelp = function(metadata) {
-	this.send(metadata, this.help());
+	if (this.listeners("help").length) {
+		this.emit("help", {
+			error: [],
+			args: [],
+			unknown: [],
+			values: {}
+		}, metadata);
+	} else {
+		this.send(metadata, this.help());		
+	}
 };
 
 /**

@@ -14,8 +14,9 @@
     "email": "rapariciog@gmail.com"
   },
   "scripts": {
+    "cover-win": "istanbul cover %APPDATA%/npm/node_modules/mocha/bin/_mocha",
     "test": "mocha",
-    "cover-win": "istanbul cover %APPDATA%/npm/node_modules/mocha/bin/_mocha"
+    "test-debug": "mocha --inspect-brk"
   },
   "license": "MIT",
   "dependencies": {},
