@@ -141,5 +141,17 @@ describe('usage', function() {
     })      
     bot.parse('help');
   });
-
+  it("should send command help if command was not valid", function () {
+    const bot = new BotCommand();
+    let cmd = bot.action(meta => bot.outputHelp(meta)).command("pizza").action((_) => {});
+    bot.setSend((meta, msg) => {
+      msg.should.be.equal(bot.help());
+    });
+    bot.parse("donut");
+    bot.setSend((meta, msg) => {
+      msg.should.be.equal(cmd.help());
+    });
+    bot.parse("pizza -h");
+    bot.parse("help pizza");
+  });
 });

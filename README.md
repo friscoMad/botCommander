@@ -38,7 +38,7 @@
 
 ## Command parsing
 
-Commands are defined with the `.command()` method, it will return the new command to configure it with a fluent api. The `.action()` command sets the callback to be called when the command is recognised by default nothing will be called creating a command without action can be usefull for creating subcommand APIs.
+Commands are defined with the `.command()` method, it will return the new command to configure it with a fluent api. The `.action()` command sets the callback to be called when the command is recognized by default nothing will be called creating a command without action can be useful for creating subcommand APIs.
 `.description()` method serves as documentation for the command, `.alias()` can be used to define command alias so both command names are interchangeable.
 
 Options can be passed with the call to `.command()`. Specifying `true` for `opts.noHelp` will remove the option from the generated help output.
@@ -86,8 +86,8 @@ bot.parse('test req opt');
 //The output will be 'opt req'
 ```
 Angled brackets (e.g. `<required>`) indicate required input. Square brackets (e.g. `[optional]`) indicate optional input.
-The arguments are applied to the callback function in the same order as the are found, the first argument will allways be the metadata described in [Metadata](#metadata), all arguments will appear after it.
-Argument definition and parsing support single and double quoted arguments, so the comunication it is not confined to one word values.
+The arguments are applied to the callback function in the same order as the are found, the first argument will always be the metadata described in [Metadata](#metadata), all arguments will appear after it.
+Argument definition and parsing support single and double quoted arguments, so the communication it is not confined to one word values.
 
 ```js
 const bot = require(bot-commander);
@@ -262,7 +262,7 @@ bot.parse('pack list');
 //Output will be 'out'
 ```
 
-The commands can be configured in a multilevel hierarchy this gives a great flexibility when creating interfaces. If a command does not have an action or a subcommand nothing will be called, except if the command is configured to show help on empy with `.showHelpOnEmpty()` in that case the command help will be returned.
+The commands can be configured in a multilevel hierarchy this gives a great flexibility when creating interfaces. If a command does not have an action or a subcommand nothing will be called, except if the command is configured to show help on empty with `.showHelpOnEmpty()` in that case the command help will be returned.
 
 When a subcommand is created, a help command is created by default that shows the usage of the command and subcommands. Take into account that the help shown is different for each level as it only shows the usage of the commands in the same level.
 
@@ -287,7 +287,7 @@ The parent command can have an action if desired, it will be called if no subcom
 
 ## Load plugins
 
-Another feature of the library is the hability to load commands from external files, it is really easy with `.load(path)` if the path is a file and exports function it will be called with parser as the only argument so it can add commands or even call load itself.
+Another feature of the library is the ability to load commands from external files, it is really easy with `.load(path)` if the path is a file and exports function it will be called with parser as the only argument so it can add commands or even call load itself.
 Take into account that relative paths are resolved from the main script path.
 
 plugin.js
@@ -335,7 +335,7 @@ The send function is shared by the whole hierarchy of commands so it can be set 
 
 ## Metadata
 
-As you probably have noted, through the whole library there are metadata arguments, this may seem a bit strange at first but the library it is designed to configure a stateless parser and then reuse many times even simultaneusly, think of an irc bot receiving commands from several users. The metadata object is passed from the parser call to actions and send function to be able to use all the metadata around the text being parsed this could be usefull for time data, from and to information, the channel, etc.
+As you probably have noted, through the whole library there are metadata arguments, this may seem a bit strange at first but the library it is designed to configure a stateless parser and then reuse many times even simultaneously, think of an irc bot receiving commands from several users. The metadata object is passed from the parser call to actions and send function to be able to use all the metadata around the text being parsed this could be useful for time data, from and to information, the channel, etc.
 The library does not make use of it or manipulate in any way, you can use it as you need.
 
 For example using a fictional irc library with `.on()` and `.send()` functions this could be a simple irc bot.
@@ -401,9 +401,9 @@ Every command has it's own command help, using the same example parsing `copy -h
 
 ### .help()
 
-Returns the help information as a string, this can be helpfull for some error handling in your actions, or for customising the help implicit command.
+Returns the help information as a string, this can be helpful for some error handling in your actions, or for customizing the help implicit command.
 If the first command you define is `help` the implicit help command will not be created so your command will be able to send a customized help.
-The help command is diffent for every node in the command hierarchy so you can redefine whatever you want.
+The help command is different for every node in the command hierarchy so you can redefine whatever you want.
 
 ```js
 const bot = require(bot-commander);
@@ -419,6 +419,21 @@ bot
   .command('test')
 ```
 
+### Help when no command is recognized
+
+In the case the input does not contain any valid command, it is not replying with any kind of help, I did miss that condition and fixing it would 
+break implementations. If this behavior is desirable, it is easy to configure the parser to do it.
+
+```js
+const bot = require(bot-commander);
+
+bot.
+  .action( meta => bot.outputHelp(meta)) //Notice this action is at the top level
+  .command('do_that')
+
+bot.parse('do_this'); //It will reply with the default help
+```
+
 ## Configuration
 
 Aside from the option argument in the command constructor (that currently is used only for noHelp), there are several functions that can alter the parsing and error handling for each command or the whole hierarchy.
@@ -427,12 +442,12 @@ The shared configuration options are: `.setSend()`, `.allowUnknownOption()`, `lo
 
 * `.setSend()`: has already been discussed on the Output section.
 * `.allowUnknownOption(boolean)`: Allows to disable errors when an unknown option is present in the command line. Default is to show an error.
-* `.lowerCase(boolean)`: Configures the parser to check commands in lower case (options and argmuents are not changed).
+* `.lowerCase(boolean)`: Configures the parser to check commands in lower case (options and arguments are not changed).
 * `.showHelpOnError(boolean)`: Allows to show or not the help when a parsing error is found, the parsing error is always reported but you can opt to not show the full help. Default is true.
 
 The configuration options that only affects one command are this three:
 
-* `.prefix()`: Allows to configure a prefix (string) or an array of prefixes to search for at the start of parsing if they are not present the line will not be parsed, this is usefull for bots listening to group channels where you need to tell the bot what to parse. It can be used on any command but it is mainly used in the main object. Default is null.
+* `.prefix()`: Allows to configure a prefix (string) or an array of prefixes to search for at the start of parsing if they are not present the line will not be parsed, this is useful for bots listening to group channels where you need to tell the bot what to parse. It can be used on any command but it is mainly used in the main object. Default is null.
 * `.showHelpOnEmpty(boolean)`: Force to show the help when no command or subcommand is identified in the parsed line. Default is false.
 *`.setParseOptions(object)`: Sets a new object as parse options for the command, this options are `{send: null, allowUnknownOption: false, showHelpOnError: true }` this function allows you to configure different options from the full hierarchy and any subcommand created after this call will inherit this options. After setting a new option object you can safely call any of the shared setting functions and will only affect this command and all subcommands created after the call.
 
